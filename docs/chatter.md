@@ -1,5 +1,6 @@
 The Foundation
 A product philosophy for our daily wellbeing companion.
+
 Vision
 The most trusted daily wellbeing companion.
 A quiet presence that helps people begin and end each day remembering that their worth is not something to earn, but something they already possess.
