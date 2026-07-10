@@ -1,15 +1,15 @@
 The Foundation
 A product philosophy for our daily wellbeing companion.
 
-Vision
+Vision:
 The most trusted daily wellbeing companion.
 A quiet presence that helps people begin and end each day remembering that their worth is not something to earn, but something they already possess.
  
-Mission
+Mission:
 To remind people that their worth isn't something they earn; it's something they already have.
 We exist to create small daily moments that gently shift perspective, replacing self-criticism with self-compassion, pressure with peace, and hopelessness with the quiet courage to begin again tomorrow.
  
-Our Philosophy
+Our Philosophy:
 We believe that every human life has inherent value.
 Not because of what it achieves.
 Not because of how productive it is.
@@ -21,7 +21,7 @@ It is not a feature.
 It is not a marketing message.
 It is our foundation.
  
-What We Believe
+What We Believe:
 We believe people are worthy before they are productive.
 We believe healing is rarely linear.
 We believe missing a day should never become a reason for shame.
@@ -35,7 +35,7 @@ Above all,
 we believe people don't need another app telling them who they should become.
 They need a companion reminding them who they already are.
  
-Who We Build For
+Who We Build For:
 We build for people navigating seasons of self-doubt.
 People recovering from burnout.
 People rebuilding after loss.
@@ -44,7 +44,7 @@ People whose inner voice has become harsher than they deserve.
 People who don't necessarily need fixing.
 They simply need reminding.
  
-The Promise We Make
+The Promise We Make:
 When someone opens this app, they should never feel manipulated.
 Never feel judged.
 Never feel tricked.
@@ -56,7 +56,7 @@ Respected.
 Encouraged.
 And gently reminded that they matter.
  
-Our Design Principles
+Our Design Principles:
 Trust Before Growth
 We will never sacrifice trust for engagement.
 No deceptive subscriptions.
@@ -106,7 +106,7 @@ we ask one question:
 If the answer is no,
 we don't build it.
  
-Our Promise
+Our Promise:
 We are not building an app to convince people they are enough.
 We are building a companion that gently reminds them of something that has always been true.
 That their worth isn't something they earn.
