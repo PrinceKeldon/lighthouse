@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, FlatList, Pressable, Modal, TextInput, ActivityIndicator } from 'react-native';
 import Colors from '@/src/constants/Colors';
+import { CONTENT } from '@/src/constants/Content';
 import { useColorScheme } from '@/src/components/useColorScheme';
 import { useEntries } from '@/src/hooks/useEntries';
 
@@ -14,10 +15,7 @@ export default function StrengthsScreen() {
   const [selectedStrength, setSelectedStrength] = useState<{id: string, name: string} | null>(null);
   const [entries, setEntries] = useState<string[]>([]);
 
-  const strengths = [
-    { id: '1', name: 'Patience', count: 3 },
-    { id: '2', name: 'Courage', count: 5 },
-  ];
+  const strengths = CONTENT.strengths.defaultStrengths;
 
   const handleCreateEntry = async () => {
     const strengthId = selectedStrength?.id;
@@ -37,7 +35,7 @@ export default function StrengthsScreen() {
   const handleStrengthPress = async (strength: any) => {
     setSelectedStrength(strength);
     const decrypted = await getEntriesForStrength(strength.id);
-    setEntries(decrypted.map(e => e.text));
+    setEntries((decrypted as any[]).map(e => e.text));
   };
 
   const renderStrength = ({ item }: { item: any }) => (
@@ -84,7 +82,7 @@ export default function StrengthsScreen() {
           {strengths.length === 0 ? (
             <View style={styles.emptyState}>
               <Text style={[styles.emptyText, { color: colors.text }]}>
-                A quiet place for moments that remind you you were patient. When one arrives, it'll feel right at home.
+                {CONTENT.strengths.emptyStateText}
               </Text>
             </View>
           ) : (
@@ -106,14 +104,15 @@ export default function StrengthsScreen() {
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
             <Text style={[styles.modalTitle, { color: colors.text }]}>Log a Moment</Text>
-            <TextInput
-              style={[styles.input, { color: colors.text, borderColor: colors.tabIconHDefault }]}
-              placeholder="What happened?"
-              placeholderTextColor={colors.tabIconDefault}
-              multiline
-              value={newEntryText}
-              onChangeText={setNewEntryText}
-            />
+              <TextInput
+                style={[styles.input, { color: colors.text, borderColor: colors.tabIconDefault }]}
+                placeholder="What happened?"
+                placeholderTextColor={colors.tabIconDefault}
+                multiline
+                value={newEntryText}
+                onChangeText={setNewEntryText}
+              />
+
             <View style={styles.modalActions}>
               <Pressable 
                 style={styles.cancelButton} 

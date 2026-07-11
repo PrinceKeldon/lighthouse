@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, Pressable, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import Colors from '@/src/constants/Colors';
+import { CONTENT } from '@/src/constants/Content';
 import { useColorScheme } from '@/src/components/useColorScheme';
 import { useEntries } from '@/src/hooks/useEntries';
 
@@ -25,7 +26,7 @@ export default function OnboardingScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.content}>
         <Text style={[styles.prompt, { color: colors.text }]}>
-          What's one thing you've done, even once, that you're quietly proud of?
+          {CONTENT.onboarding.prompt}
         </Text>
         
         <TextInput

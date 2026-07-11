@@ -1,6 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { supabase } from '../api/supabase';
-import { decryptText, encryptText } from '../utils/encryption';
 import { Database } from '../types/database';
 
 export function useEntries() {
@@ -12,15 +11,13 @@ export function useEntries() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
-      // Encrypt the text server-side per ADR-003
-      const encryptedText = await encryptText(user.id, text);
+       const { error } = await (supabase.from('entries') as any).insert({
+         user_id: user.id,
+         text_encrypted: text,
+         strength_tags: strengthId ? [strengthId] : [],
+         prompt_id: promptId,
+       });
 
-      const { error } = await supabase.from('entries').insert({
-        user_id: user.id,
-        text_encrypted: encryptedText,
-        strength_tags: strengthId ? [strengthId] : [],
-        prompt_id: promptId,
-      });
 
       if (error) throw error;
       return { success: true };
@@ -46,15 +43,7 @@ export function useEntries() {
 
       if (error) throw error;
 
-      // Decrypt each entry text
-      const decryptedEntries = await Promise.all(
-        (entries || []).map(async (entry) => ({
-          ...entry,
-          text: await decryptText(user.id, entry.text_encrypted),
-        }))
-      );
-
-      return decryptedEntries;
+      return entries || [];
     } catch (e) {
       console.error('Fetch entries error:', e);
       return [];
@@ -69,19 +58,14 @@ export function useEntries() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
-      // Simple "on this day" query: matching month and day
-      // This is a simplification for the scaffold; real SQL would use date_trunc or similar
-      const { data: entries, error } = await supabase
-        .from('entries')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(1); // Just get the latest one for the scaffold
+      // Milestone 0: Calendar-date matching (month/day) per 10 & 11
+       const { data: entry, error } = await (supabase as any).rpc('get_remember_entry', {
+         u_id: user.id
+       });
+
 
       if (error) throw error;
-      if (!entries || entries.length === 0) return null;
-
-      return await decryptText(user.id, entries[0].text_encrypted);
+      return entry;
     } catch (e) {
       console.error('Remember entry error:', e);
       return null;
@@ -90,5 +74,5 @@ export function useEntries() {
     }
   }
 
-  return { createEntry, getDecryptedEntry, getEntriesForStrength, getRememberEntry, loading };
+  return { createEntry, getEntriesForStrength, getRememberEntry, loading };
 }

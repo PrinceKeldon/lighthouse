@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView, TextInput, ActivityIndicator } from 'react-native';
+import * as SecureStore from 'expo-secure-store';
 import Colors from '@/src/constants/Colors';
+import { CONTENT } from '@/src/constants/Content';
 import { useColorScheme } from '@/src/components/useColorScheme';
 import { useEntries } from '@/src/hooks/useEntries';
+import affirmations from '@/assets/affirmations.json';
 
 function RememberOverlay({ entry, onDismiss }: { entry: string, onDismiss: () => void }) {
   const colorScheme = useColorScheme();
@@ -27,17 +30,35 @@ export default function TodayScreen() {
   const [isReflecting, setIsReflecting] = useState(false);
   const [reflectionText, setReflectionText] = useState('');
   const [rememberEntry, setRememberEntry] = useState<string | null>(null);
+  const [affirmation, setAffirmation] = useState('');
   const { createEntry, getRememberEntry, loading } = useEntries();
 
   useEffect(() => {
-    async function loadRemember() {
+    async function setupToday() {
+      // 1. Load or create install seed
+      let seed = await SecureStore.getItemAsync('install_seed');
+      if (seed === null) {
+        seed = Math.floor(Math.random() * 1000000).toString();
+        await SecureStore.setItemAsync('install_seed', seed);
+      }
+      const installSeed = parseInt(seed, 10);
+
+      // 2. Compute dayIndex (days since Jan 1, 2026)
+      const epoch = new Date('2026-01-01T00:00:00Z');
+      const now = new Date();
+      const diffInMs = now.getTime() - epoch.getTime();
+      const dayIndex = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+
+      // 3. Deterministic selection
+      const selectedIndex = (dayIndex + installSeed) % affirmations.length;
+      setAffirmation(affirmations[selectedIndex].text);
+
+      // Load remember entry
       const entry = await getRememberEntry();
       if (entry) setRememberEntry(entry);
     }
-    loadRemember();
+    setupToday();
   }, []);
-
-  const affirmation = "You are exactly where you need to be to begin.";
 
   const handleSaveReflection = async () => {
     const result = await createEntry(reflectionText, undefined, 'daily_reflect');
@@ -68,7 +89,7 @@ export default function TodayScreen() {
         ) : (
           <View style={styles.reflectArea}>
             <Text style={[styles.prompt, { color: colors.text }]}>
-              Has there been a moment recently that reminds you this might already be true?
+              {CONTENT.today.reflectionPrompt}
             </Text>
             <TextInput
               style={[styles.input, { color: colors.text, borderColor: colors.tabIconDefault }]}
@@ -172,7 +193,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   overlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 100,
     justifyContent: 'center',
     alignItems: 'center',
