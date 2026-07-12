@@ -1,6 +1,10 @@
 # ADR-003 — Data Encryption Architecture
 
-Status: Draft — pending founder sign-off
+Status: Superseded by ADR-004-mvp-security-baseline.md. The architecture
+decision below remains sound and is the plan for Phase 2 — it was the
+*sequencing* (implementing it inside Sprint 0/Milestone 0) that was
+wrong, not the design. Preserved in full per the Charter's immutable-
+history rule.
 
 ## Decision
 

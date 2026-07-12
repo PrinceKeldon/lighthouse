@@ -1,47 +1,78 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, Pressable, Modal, TextInput, ActivityIndicator } from 'react-native';
+import { useFocusEffect } from 'expo-router';
 import Colors from '@/src/constants/Colors';
 import { CONTENT } from '@/src/constants/Content';
 import { useColorScheme } from '@/src/components/useColorScheme';
 import { useEntries } from '@/src/hooks/useEntries';
 
+type StrengthWithCount = { id: string; name: string; count: number };
+
 export default function StrengthsScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme];
-  const { createEntry, getEntriesForStrength, loading } = useEntries();
-  
+  const { createEntry, getStrengths, findOrCreateStrength, getEntriesForStrength, loading } = useEntries();
+
+  const [strengths, setStrengths] = useState<StrengthWithCount[]>([]);
+  const [fetchingStrengths, setFetchingStrengths] = useState(true);
   const [isEntryModalVisible, setEntryModalVisible] = useState(false);
   const [newEntryText, setNewEntryText] = useState('');
-  const [selectedStrength, setSelectedStrength] = useState<{id: string, name: string} | null>(null);
+  const [newStrengthName, setNewStrengthName] = useState('');
+  const [selectedStrength, setSelectedStrength] = useState<StrengthWithCount | null>(null);
   const [entries, setEntries] = useState<string[]>([]);
 
-  const strengths = CONTENT.strengths.defaultStrengths;
+  const loadStrengths = useCallback(async () => {
+    setFetchingStrengths(true);
+    const data = await getStrengths();
+    setStrengths(data as StrengthWithCount[]);
+    setFetchingStrengths(false);
+  }, []);
+
+  // Refresh every time this screen is focused, not just on first mount —
+  // so an entry created via Today's Reflect prompt shows up here too.
+  useFocusEffect(
+    useCallback(() => {
+      loadStrengths();
+    }, [loadStrengths])
+  );
 
   const handleCreateEntry = async () => {
-    const strengthId = selectedStrength?.id;
+    if (!newStrengthName.trim() || !newEntryText.trim()) return;
+
+    const strengthResult = await findOrCreateStrength(newStrengthName);
+    if (!strengthResult.success || !strengthResult.strength) {
+      alert('Could not save Strength.');
+      return;
+    }
+
     const result = await createEntry(
-      newEntryText, 
-      strengthId || undefined, 
+      newEntryText,
+      strengthResult.strength.id,
       'manual_strength_entry'
     );
+
     if (result.success) {
       setNewEntryText('');
+      setNewStrengthName('');
       setEntryModalVisible(false);
+      loadStrengths();
     } else {
       alert('Could not save entry.');
     }
   };
 
-  const handleStrengthPress = async (strength: any) => {
+  const handleStrengthPress = async (strength: StrengthWithCount) => {
     setSelectedStrength(strength);
-    const decrypted = await getEntriesForStrength(strength.id);
-    setEntries((decrypted as any[]).map(e => e.text));
+    const fetched = await getEntriesForStrength(strength.id);
+    setEntries((fetched as any[]).map(e => e.text));
   };
 
-  const renderStrength = ({ item }: { item: any }) => (
+  const renderStrength = ({ item }: { item: StrengthWithCount }) => (
     <Pressable style={styles.item} onPress={() => handleStrengthPress(item)}>
       <Text style={[styles.itemName, { color: colors.text }]}>{item.name}</Text>
-      <Text style={[styles.itemCount, { color: colors.tabIconDefault }]}>{item.count} entries</Text>
+      <Text style={[styles.itemCount, { color: colors.tabIconDefault }]}>
+        {item.count} {item.count === 1 ? 'entry' : 'entries'}
+      </Text>
     </Pressable>
   );
 
@@ -49,10 +80,10 @@ export default function StrengthsScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
         <Text style={[styles.title, { color: colors.text }]}>Your Strengths</Text>
-        <Pressable 
+        <Pressable
           style={[styles.addButton, { backgroundColor: colors.tint }]}
           onPress={() => {
-            setSelectedStrength(strengths[0]); // Default to first for scaffold
+            setNewStrengthName(selectedStrength?.name || '');
             setEntryModalVisible(true);
           }}
         >
@@ -77,22 +108,22 @@ export default function StrengthsScreen() {
             ListEmptyComponent={<Text style={{ textAlign: 'center', opacity: 0.5 }}>No entries yet</Text>}
           />
         </View>
+      ) : fetchingStrengths ? (
+        <View style={styles.emptyState}>
+          <ActivityIndicator />
+        </View>
+      ) : strengths.length === 0 ? (
+        <View style={styles.emptyState}>
+          <Text style={[styles.emptyText, { color: colors.text }]}>
+            {CONTENT.strengths.emptyStateText}
+          </Text>
+        </View>
       ) : (
-        <>
-          {strengths.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Text style={[styles.emptyText, { color: colors.text }]}>
-                {CONTENT.strengths.emptyStateText}
-              </Text>
-            </View>
-          ) : (
-            <FlatList
-              data={strengths}
-              renderItem={renderStrength}
-              keyExtractor={(item) => item.id}
-            />
-          )}
-        </>
+        <FlatList
+          data={strengths}
+          renderItem={renderStrength}
+          keyExtractor={(item) => item.id}
+        />
       )}
 
       <Modal
@@ -104,26 +135,35 @@ export default function StrengthsScreen() {
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
             <Text style={[styles.modalTitle, { color: colors.text }]}>Log a Moment</Text>
-              <TextInput
-                style={[styles.input, { color: colors.text, borderColor: colors.tabIconDefault }]}
-                placeholder="What happened?"
-                placeholderTextColor={colors.tabIconDefault}
-                multiline
-                value={newEntryText}
-                onChangeText={setNewEntryText}
-              />
+
+            <TextInput
+              style={[styles.input, styles.strengthInput, { color: colors.text, borderColor: colors.tabIconDefault }]}
+              placeholder="Which Strength is this evidence of? (e.g. Patience)"
+              placeholderTextColor={colors.tabIconDefault}
+              value={newStrengthName}
+              onChangeText={setNewStrengthName}
+            />
+
+            <TextInput
+              style={[styles.input, { color: colors.text, borderColor: colors.tabIconDefault }]}
+              placeholder="What happened?"
+              placeholderTextColor={colors.tabIconDefault}
+              multiline
+              value={newEntryText}
+              onChangeText={setNewEntryText}
+            />
 
             <View style={styles.modalActions}>
-              <Pressable 
-                style={styles.cancelButton} 
+              <Pressable
+                style={styles.cancelButton}
                 onPress={() => setEntryModalVisible(false)}
               >
                 <Text style={{ color: colors.text }}>Cancel</Text>
               </Pressable>
-              <Pressable 
-                style={[styles.saveButton, { backgroundColor: colors.tint }]} 
+              <Pressable
+                style={[styles.saveButton, { backgroundColor: colors.tint }]}
                 onPress={handleCreateEntry}
-                disabled={!newEntryText.trim() || loading}
+                disabled={!newEntryText.trim() || !newStrengthName.trim() || loading}
               >
                 {loading ? <ActivityIndicator color="white" size="small" /> : <Text style={styles.saveButtonText}>Save</Text>}
               </Pressable>
@@ -232,6 +272,9 @@ const styles = StyleSheet.create({
     fontSize: 18,
     minHeight: 100,
     textAlignVertical: 'top',
+  },
+  strengthInput: {
+    minHeight: 50,
   },
   modalActions: {
     flexDirection: 'row',

@@ -28,7 +28,7 @@ export type Database = {
         Row: {
           id: string;
           user_id: string;
-          text_encrypted: string;
+          text: string;
           strength_tags: string[];
           prompt_id: string | null;
           weight: number | null;
@@ -37,7 +37,7 @@ export type Database = {
         Insert: {
           id?: string;
           user_id: string;
-          text_encrypted: string;
+          text: string;
           strength_tags?: string[];
           prompt_id?: string | null;
           weight?: number | null;
@@ -46,7 +46,7 @@ export type Database = {
         Update: {
           id?: string;
           user_id?: string;
-          text_encrypted?: string;
+          text?: string;
           strength_tags?: string[];
           prompt_id?: string | null;
           weight?: number | null;
@@ -54,48 +54,48 @@ export type Database = {
         };
       };
        subscriptions: {
-         Row: {
-           user_id: string;
-           tier: 'free' | 'plus' | 'founding_supporter';
-           updated_at: string;
-         };
-         Insert: {
-           user_id: string;
-           tier?: 'free' | 'plus' | 'founding_supporter';
-           updated_at?: string;
-         };
-         Update: {
-           user_id?: string;
-           tier?: 'free' | 'plus' | 'founding_supporter';
-           updated_at?: string;
-         };
-       };
-       affirmations: {
-         Row: {
-           id: string;
-           text: string;
-           theme_tags: string[];
-           tone: string;
-           time_of_day: string[];
-           energy: number;
-         };
-         Insert: {
-           id?: string;
-           text: string;
-           theme_tags?: string[];
-           tone?: string;
-           time_of_day?: string[];
-           energy?: number;
-         };
-         Update: {
-           id?: string;
-           text?: string;
-           theme_tags?: string[];
-           tone?: string;
-           time_of_day?: string[];
-           energy?: number;
-         };
-       };
-     };
-   };
- };
+          Row: {
+            user_id: string;
+            tier: 'free' | 'plus' | 'founding_supporter';
+            updated_at: string;
+          };
+          Insert: {
+            user_id: string;
+            tier?: 'free' | 'plus' | 'founding_supporter';
+            updated_at?: string;
+          };
+          Update: {
+            user_id?: string;
+            tier?: 'free' | 'plus' | 'founding_supporter';
+            updated_at?: string;
+          };
+        };
+        affirmations: {
+          Row: {
+            id: string;
+            text: string;
+            theme_tags: string[];
+            tone: string;
+            time_of_day: string[];
+            energy: number;
+          };
+          Insert: {
+            id?: string;
+            text: string;
+            theme_tags?: string[];
+            tone?: string;
+            time_of_day?: string[];
+            energy?: number;
+          };
+          Update: {
+            id?: string;
+            text?: string;
+            theme_tags?: string[];
+            tone?: string;
+            time_of_day?: string[];
+            energy?: number;
+          };
+        };
+      };
+    };
+  };
