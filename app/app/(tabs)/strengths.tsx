@@ -136,9 +136,12 @@ export default function StrengthsScreen() {
           <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
             <Text style={[styles.modalTitle, { color: colors.text }]}>Log a Moment</Text>
 
+            <Text style={[styles.fieldLabel, { color: colors.tabIconDefault }]}>
+              Which Strength does this belong to?
+            </Text>
             <TextInput
               style={[styles.input, styles.strengthInput, { color: colors.text, borderColor: colors.tabIconDefault }]}
-              placeholder="Which Strength is this evidence of? (e.g. Patience)"
+              placeholder="e.g. Patience, Courage..."
               placeholderTextColor={colors.tabIconDefault}
               value={newStrengthName}
               onChangeText={setNewStrengthName}
@@ -275,6 +278,10 @@ const styles = StyleSheet.create({
   },
   strengthInput: {
     minHeight: 50,
+  },
+  fieldLabel: {
+    fontSize: 13,
+    marginBottom: -10,
   },
   modalActions: {
     flexDirection: 'row',
