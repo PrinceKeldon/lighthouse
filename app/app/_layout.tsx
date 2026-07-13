@@ -8,19 +8,18 @@ import {
 import { Stack } from 'expo-router';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/src/components/useColorScheme';
 import { LighthousePaper, LighthouseFonts } from '@/src/constants/LighthouseTheme';
-import { ensureSession } from '@/src/api/supabase';
 
 export {
   ErrorBoundary,
 } from 'expo-router';
 
 export const unstable_settings = {
-  initialRouteName: 'onboarding',
+  initialRouteName: 'welcome',
 };
 
 SplashScreen.preventAutoHideAsync();
@@ -33,34 +32,23 @@ export default function RootLayout() {
     Newsreader_500Medium,
     Newsreader_600SemiBold,
   });
-  const [sessionReady, setSessionReady] = useState(false);
-  const [sessionError, setSessionError] = useState<Error | null>(null);
 
   useEffect(() => {
     if (error) throw error;
   }, [error]);
 
-  // A session (anonymous, per src/api/supabase.ts's ensureSession) has to
-  // exist before onboarding or any data screen mounts — otherwise
-  // findOrCreateStrength/createEntry fail with "User not authenticated."
+  // Session bootstrap (ensureSession) used to block here, showing a
+  // blank screen while it resolved. It now happens inside welcome.tsx
+  // instead, in parallel with the branding being visible — the native
+  // splash only needs to wait for fonts, not the network round-trip.
   useEffect(() => {
-    ensureSession()
-      .then(() => setSessionReady(true))
-      .catch((e) => setSessionError(e));
-  }, []);
-
-  useEffect(() => {
-    if (loaded && (sessionReady || sessionError)) {
+    if (loaded) {
       SplashScreen.hideAsync();
     }
-  }, [loaded, sessionReady, sessionError]);
+  }, [loaded]);
 
-  if (!loaded || (!sessionReady && !sessionError)) {
+  if (!loaded) {
     return null;
-  }
-
-  if (sessionError) {
-    throw sessionError;
   }
 
   return <RootLayoutNav />;
@@ -73,6 +61,7 @@ function RootLayoutNav() {
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack>
+        <Stack.Screen name="welcome" options={{ headerShown: false }} />
         <Stack.Screen name="onboarding" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen
