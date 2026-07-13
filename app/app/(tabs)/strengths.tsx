@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, Pressable, Modal, TextInput, ActivityIndicator } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
-import Colors from '@/src/constants/Colors';
 import { CONTENT } from '@/src/constants/Content';
+import { LighthousePaper, LighthouseRadii, LighthouseFonts } from '@/src/constants/LighthouseTheme';
 import { useColorScheme } from '@/src/components/useColorScheme';
 import { useEntries } from '@/src/hooks/useEntries';
 
@@ -11,7 +11,7 @@ type StrengthWithCount = { id: string; name: string; count: number };
 export default function StrengthsScreen() {
   const router = useRouter();
   const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme];
+  const colors = LighthousePaper[colorScheme === 'dark' ? 'dark' : 'light'];
   const { createEntry, getStrengths, findOrCreateStrength, getEntriesForStrength, loading } = useEntries();
 
   const [strengths, setStrengths] = useState<StrengthWithCount[]>([]);
@@ -69,9 +69,12 @@ export default function StrengthsScreen() {
   };
 
   const renderStrength = ({ item }: { item: StrengthWithCount }) => (
-    <Pressable style={styles.item} onPress={() => handleStrengthPress(item)}>
+    <Pressable
+      style={[styles.item, { backgroundColor: colors.card, borderColor: colors.border, shadowColor: colors.shadow }]}
+      onPress={() => handleStrengthPress(item)}
+    >
       <Text style={[styles.itemName, { color: colors.text }]}>{item.name}</Text>
-      <Text style={[styles.itemCount, { color: colors.tabIconDefault }]}>
+      <Text style={[styles.itemCount, { color: colors.secondaryText }]}>
         {item.count} {item.count === 1 ? 'entry' : 'entries'}
       </Text>
     </Pressable>
@@ -80,9 +83,9 @@ export default function StrengthsScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.text }]}>Your Strengths</Text>
+        <Text style={[styles.title, { color: colors.text, fontFamily: LighthouseFonts.heading }]}>Your Strengths</Text>
         <Pressable
-          style={[styles.addButton, { backgroundColor: colors.tint }]}
+          style={[styles.addButton, { backgroundColor: colors.oceanAccent }]}
           onPress={() => {
             setNewStrengthName(selectedStrength?.name || '');
             setEntryModalVisible(true);
@@ -94,10 +97,10 @@ export default function StrengthsScreen() {
 
       {!selectedStrength && (
         <Pressable
-          style={[styles.exploreCard, { borderColor: colors.tint }]}
+          style={[styles.exploreCard, { backgroundColor: colors.card, borderColor: colors.border, shadowColor: colors.shadow }]}
           onPress={() => router.push('/modal')}
         >
-          <Text style={[styles.exploreCardText, { color: colors.tint }]}>
+          <Text style={[styles.exploreCardText, { color: colors.oceanAccent }]}>
             ✦ Explore Lighthouses
           </Text>
         </Pressable>
@@ -106,27 +109,29 @@ export default function StrengthsScreen() {
       {selectedStrength ? (
         <View style={styles.detailView}>
           <Pressable onPress={() => setSelectedStrength(null)} style={styles.backButton}>
-            <Text style={{ color: colors.tint }}>← Back to Strengths</Text>
+            <Text style={{ color: colors.oceanAccent }}>← Back to Strengths</Text>
           </Pressable>
-          <Text style={[styles.detailTitle, { color: colors.text }]}>{selectedStrength.name}</Text>
+          <Text style={[styles.detailTitle, { color: colors.text, fontFamily: LighthouseFonts.heading }]}>
+            {selectedStrength.name}
+          </Text>
           <FlatList
             data={entries}
             keyExtractor={(_, index) => index.toString()}
             renderItem={({ item }) => (
-              <View style={styles.entryItem}>
-                <Text style={[styles.entryText, { color: colors.text }]}>{item}</Text>
+              <View style={[styles.entryItem, { backgroundColor: colors.card, borderColor: colors.border, shadowColor: colors.shadow }]}>
+                <Text style={[styles.entryText, { color: colors.text, fontFamily: LighthouseFonts.quote }]}>"{item}"</Text>
               </View>
             )}
-            ListEmptyComponent={<Text style={{ textAlign: 'center', opacity: 0.5 }}>No entries yet</Text>}
+            ListEmptyComponent={<Text style={{ textAlign: 'center', color: colors.secondaryText }}>No entries yet</Text>}
           />
         </View>
       ) : fetchingStrengths ? (
         <View style={styles.emptyState}>
-          <ActivityIndicator />
+          <ActivityIndicator color={colors.oceanAccent} />
         </View>
       ) : strengths.length === 0 ? (
         <View style={styles.emptyState}>
-          <Text style={[styles.emptyText, { color: colors.text }]}>
+          <Text style={[styles.emptyText, { color: colors.secondaryText }]}>
             {CONTENT.strengths.emptyStateText}
           </Text>
         </View>
@@ -146,23 +151,25 @@ export default function StrengthsScreen() {
       >
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
-            <Text style={[styles.modalTitle, { color: colors.text }]}>Log a Moment</Text>
+            <Text style={[styles.modalTitle, { color: colors.text, fontFamily: LighthouseFonts.headingMedium }]}>
+              Log a Moment
+            </Text>
 
-            <Text style={[styles.fieldLabel, { color: colors.tabIconDefault }]}>
+            <Text style={[styles.fieldLabel, { color: colors.secondaryText }]}>
               Which Strength does this belong to?
             </Text>
             <TextInput
-              style={[styles.input, styles.strengthInput, { color: colors.text, borderColor: colors.tabIconDefault }]}
+              style={[styles.input, styles.strengthInput, { color: colors.text, borderColor: colors.border, backgroundColor: colors.card }]}
               placeholder="e.g. Patience, Courage..."
-              placeholderTextColor={colors.tabIconDefault}
+              placeholderTextColor={colors.secondaryText}
               value={newStrengthName}
               onChangeText={setNewStrengthName}
             />
 
             <TextInput
-              style={[styles.input, { color: colors.text, borderColor: colors.tabIconDefault }]}
+              style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.card }]}
               placeholder="What happened?"
-              placeholderTextColor={colors.tabIconDefault}
+              placeholderTextColor={colors.secondaryText}
               multiline
               value={newEntryText}
               onChangeText={setNewEntryText}
@@ -173,10 +180,10 @@ export default function StrengthsScreen() {
                 style={styles.cancelButton}
                 onPress={() => setEntryModalVisible(false)}
               >
-                <Text style={{ color: colors.text }}>Cancel</Text>
+                <Text style={{ color: colors.secondaryText }}>Cancel</Text>
               </Pressable>
               <Pressable
-                style={[styles.saveButton, { backgroundColor: colors.tint }]}
+                style={[styles.saveButton, { backgroundColor: colors.oceanAccent }]}
                 onPress={handleCreateEntry}
                 disabled={!newEntryText.trim() || !newStrengthName.trim() || loading}
               >
@@ -203,19 +210,22 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   exploreCard: {
-    borderWidth: 1,
-    borderRadius: 14,
-    paddingVertical: 14,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: LighthouseRadii.card,
+    paddingVertical: 16,
     alignItems: 'center',
     marginBottom: 20,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 12,
+    elevation: 2,
   },
   exploreCardText: {
     fontSize: 15,
     fontWeight: '600',
   },
   title: {
-    fontSize: 24,
-    fontWeight: '600',
+    fontSize: 26,
   },
   addButton: {
     paddingVertical: 8,
@@ -237,15 +247,20 @@ const styles = StyleSheet.create({
     fontSize: 18,
     textAlign: 'center',
     lineHeight: 26,
-    opacity: 0.7,
   },
   item: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.05)',
+    paddingVertical: 16,
+    paddingHorizontal: 18,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: LighthouseRadii.card,
+    marginBottom: 12,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 8,
+    elevation: 1,
   },
   itemName: {
     fontSize: 18,
@@ -262,17 +277,22 @@ const styles = StyleSheet.create({
   },
   detailTitle: {
     fontSize: 28,
-    fontWeight: '600',
     marginBottom: 20,
   },
   entryItem: {
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.05)',
+    paddingVertical: 16,
+    paddingHorizontal: 18,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: LighthouseRadii.card,
+    marginBottom: 12,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 8,
+    elevation: 1,
   },
   entryText: {
     fontSize: 18,
-    lineHeight: 24,
+    lineHeight: 26,
   },
   modalOverlay: {
     flex: 1,
@@ -280,20 +300,19 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)',
   },
   modalContent: {
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
     padding: 30,
     paddingBottom: 50,
     gap: 20,
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: '600',
     textAlign: 'center',
   },
   input: {
-    borderWidth: 1,
-    borderRadius: 12,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 14,
     padding: 15,
     fontSize: 18,
     minHeight: 100,
@@ -317,7 +336,7 @@ const styles = StyleSheet.create({
   saveButton: {
     paddingVertical: 10,
     paddingHorizontal: 20,
-    borderRadius: 10,
+    borderRadius: 14,
   },
   saveButtonText: {
     color: 'white',

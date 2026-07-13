@@ -133,20 +133,23 @@ export function useEntries() {
     }
   }
 
-  async function getRememberEntry() {
+  async function getRememberEntry(): Promise<{ text: string; created_at: string } | null> {
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
-      // Milestone 0: Calendar-date matching (month/day) per 10 & 11
-       const { data: entry, error } = await (supabase as any).rpc('get_remember_entry', {
-          u_id: user.id
-        });
-
+      // Milestone 0: Calendar-date matching (month/day) per 10 & 11.
+      // The RPC now returns a one-row table (text, created_at) rather
+      // than bare text, so the client can show relative phrasing like
+      // "three weeks ago" instead of just the quote.
+      const { data, error } = await (supabase as any).rpc('get_remember_entry', {
+        u_id: user.id
+      });
 
       if (error) throw error;
-      return entry;
+      const row = Array.isArray(data) ? data[0] : data;
+      return row && row.text ? { text: row.text, created_at: row.created_at } : null;
     } catch (e) {
       console.error('Remember entry error:', e);
       return null;

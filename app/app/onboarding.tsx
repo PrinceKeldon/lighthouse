@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, Pressable, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
-import Colors from '@/src/constants/Colors';
 import { CONTENT } from '@/src/constants/Content';
+import { LighthousePaper, LighthouseFonts } from '@/src/constants/LighthouseTheme';
 import { useColorScheme } from '@/src/components/useColorScheme';
 import { useEntries } from '@/src/hooks/useEntries';
 import { hasCompletedOnboarding } from '@/src/api/supabase';
+import { LighthouseMark } from '@/src/components/LighthouseMark';
 
 // Light starter suggestions only — per 06-user-journeys.md, the app
 // offers a few gentle tags or the user names their own. Never a full
@@ -16,7 +17,7 @@ const STARTER_SUGGESTIONS = ['Courage', 'Patience', 'Showing Up'];
 export default function OnboardingScreen() {
   const router = useRouter();
   const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme];
+  const colors = LighthousePaper[colorScheme === 'dark' ? 'dark' : 'light'];
   const [checkingReturningUser, setCheckingReturningUser] = useState(true);
   const [step, setStep] = useState<'entry' | 'strength'>('entry');
   const [entry, setEntry] = useState('');
@@ -40,7 +41,7 @@ export default function OnboardingScreen() {
   if (checkingReturningUser) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <ActivityIndicator />
+        <ActivityIndicator color={colors.oceanAccent} />
       </View>
     );
   }
@@ -71,21 +72,22 @@ export default function OnboardingScreen() {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.content}>
-          <Text style={[styles.prompt, { color: colors.text }]}>
+          <LighthouseMark color={colors.oceanAccent} />
+          <Text style={[styles.prompt, { color: colors.text, fontFamily: LighthouseFonts.quote }]}>
             {CONTENT.onboarding.prompt}
           </Text>
 
           <TextInput
-            style={[styles.input, { color: colors.text, borderColor: colors.tabIconDefault }]}
+            style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.card }]}
             placeholder="Write it here..."
-            placeholderTextColor={colors.tabIconDefault}
+            placeholderTextColor={colors.secondaryText}
             multiline
             value={entry}
             onChangeText={setEntry}
           />
 
           <Pressable
-            style={[styles.button, { backgroundColor: colors.tint, opacity: !entry.trim() ? 0.5 : 1 }]}
+            style={[styles.button, { backgroundColor: colors.oceanAccent, opacity: !entry.trim() ? 0.5 : 1 }]}
             onPress={handleContinueToStrength}
             disabled={!entry.trim()}
           >
@@ -99,10 +101,10 @@ export default function OnboardingScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.content}>
-        <Text style={[styles.prompt, { color: colors.text }]}>
+        <Text style={[styles.prompt, { color: colors.text, fontFamily: LighthouseFonts.headingMedium }]}>
           What does this say about you?
         </Text>
-        <Text style={[styles.subtext, { color: colors.tabIconDefault }]}>
+        <Text style={[styles.subtext, { color: colors.secondaryText }]}>
           Pick one, or name your own.
         </Text>
 
@@ -113,13 +115,13 @@ export default function OnboardingScreen() {
               style={[
                 styles.chip,
                 {
-                  borderColor: colors.tint,
-                  backgroundColor: strengthName === suggestion ? colors.tint : 'transparent',
+                  borderColor: colors.oceanAccent,
+                  backgroundColor: strengthName === suggestion ? colors.oceanAccent : 'transparent',
                 },
               ]}
               onPress={() => setStrengthName(suggestion)}
             >
-              <Text style={{ color: strengthName === suggestion ? 'white' : colors.tint }}>
+              <Text style={{ color: strengthName === suggestion ? 'white' : colors.oceanAccent }}>
                 {suggestion}
               </Text>
             </Pressable>
@@ -127,15 +129,15 @@ export default function OnboardingScreen() {
         </View>
 
         <TextInput
-          style={[styles.input, styles.strengthInput, { color: colors.text, borderColor: colors.tabIconDefault }]}
+          style={[styles.input, styles.strengthInput, { color: colors.text, borderColor: colors.border, backgroundColor: colors.card }]}
           placeholder="Or name your own..."
-          placeholderTextColor={colors.tabIconDefault}
+          placeholderTextColor={colors.secondaryText}
           value={strengthName}
           onChangeText={setStrengthName}
         />
 
         <Pressable
-          style={[styles.button, { backgroundColor: colors.tint, opacity: loading || !strengthName.trim() ? 0.7 : 1 }]}
+          style={[styles.button, { backgroundColor: colors.oceanAccent, opacity: loading || !strengthName.trim() ? 0.7 : 1 }]}
           onPress={handleComplete}
           disabled={!strengthName.trim() || loading}
         >
@@ -158,6 +160,7 @@ const styles = StyleSheet.create({
   },
   content: {
     gap: 20,
+    alignItems: 'stretch',
   },
   prompt: {
     fontSize: 24,
@@ -171,8 +174,8 @@ const styles = StyleSheet.create({
     marginTop: -15,
   },
   input: {
-    borderWidth: 1,
-    borderRadius: 12,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 14,
     padding: 15,
     fontSize: 18,
     minHeight: 120,
@@ -195,7 +198,7 @@ const styles = StyleSheet.create({
   },
   button: {
     padding: 15,
-    borderRadius: 12,
+    borderRadius: 14,
     alignItems: 'center',
     marginTop: 20,
   },

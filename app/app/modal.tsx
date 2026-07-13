@@ -1,10 +1,11 @@
 import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, Pressable, TextInput, ActivityIndicator, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
-import Colors from '@/src/constants/Colors';
 import { CONTENT } from '@/src/constants/Content';
+import { LighthousePaper, LighthouseRadii, LighthouseFonts } from '@/src/constants/LighthouseTheme';
 import { useColorScheme } from '@/src/components/useColorScheme';
 import { useEntries } from '@/src/hooks/useEntries';
+import { LighthouseMark } from '@/src/components/LighthouseMark';
 
 type Lighthouse = { name: string; reminder: string; reflection: string };
 
@@ -15,7 +16,7 @@ type Lighthouse = { name: string; reminder: string; reflection: string };
 export default function ExploreLighthousesScreen() {
   const router = useRouter();
   const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme];
+  const colors = LighthousePaper[colorScheme === 'dark' ? 'dark' : 'light'];
   const { createEntry, findOrCreateStrength, getEntriesForStrength } = useEntries();
 
   const [selected, setSelected] = useState<Lighthouse | null>(null);
@@ -67,54 +68,68 @@ export default function ExploreLighthousesScreen() {
     return (
       <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={styles.detailContent}>
         <Pressable onPress={() => setSelected(null)} style={styles.backButton}>
-          <Text style={{ color: colors.tint }}>← All Lighthouses</Text>
+          <Text style={{ color: colors.oceanAccent }}>← All Lighthouses</Text>
         </Pressable>
 
-        <Text style={[styles.lighthouseName, { color: colors.text }]}>{selected.name}</Text>
+        <View style={styles.hero}>
+          <LighthouseMark color={colors.oceanAccent} />
+          <Text style={[styles.lighthouseName, { color: colors.text, fontFamily: LighthouseFonts.heading }]}>
+            {selected.name}
+          </Text>
+        </View>
 
-        <View style={styles.section}>
-          <Text style={[styles.sectionLabel, { color: colors.tabIconDefault }]}>Today's Reminder</Text>
-          <Text style={[styles.reminderText, { color: colors.text }]}>{selected.reminder}</Text>
+        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, shadowColor: colors.shadow }]}>
+          <Text style={[styles.sectionLabel, { color: colors.secondaryText }]}>Today's Reminder</Text>
+          <Text style={[styles.reminderText, { color: colors.text, fontFamily: LighthouseFonts.quote }]}>
+            "{selected.reminder}"
+          </Text>
         </View>
 
         {loadingDetail ? (
-          <ActivityIndicator style={{ marginTop: 20 }} />
+          <ActivityIndicator color={colors.oceanAccent} style={{ marginTop: 20 }} />
         ) : (
           <>
             {recentEntry && (
-              <View style={styles.section}>
-                <Text style={[styles.sectionLabel, { color: colors.tabIconDefault }]}>Remember</Text>
-                <Text style={[styles.rememberText, { color: colors.text }]}>{recentEntry}</Text>
-              </View>
-            )}
-
-            {evidenceCount > 0 && (
-              <View style={styles.section}>
-                <Text style={[styles.sectionLabel, { color: colors.tabIconDefault }]}>Evidence</Text>
-                <Text style={[styles.evidenceText, { color: colors.text }]}>
-                  You've recognized {selected.name} {evidenceCount} {evidenceCount === 1 ? 'time' : 'times'}.
+              <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, shadowColor: colors.shadow }]}>
+                <Text style={[styles.sectionLabel, { color: colors.secondaryText }]}>Remember</Text>
+                <Text style={[styles.rememberText, { color: colors.text, fontFamily: LighthouseFonts.quote }]}>
+                  "{recentEntry}"
                 </Text>
               </View>
             )}
 
-            <View style={styles.section}>
-              <Text style={[styles.sectionLabel, { color: colors.tabIconDefault }]}>Reflection</Text>
-              <Text style={[styles.reflectionPrompt, { color: colors.text }]}>{selected.reflection}</Text>
+            {evidenceCount > 0 && (
+              <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, shadowColor: colors.shadow }]}>
+                <Text style={[styles.sectionLabel, { color: colors.secondaryText }]}>Evidence</Text>
+                <Text style={[styles.evidenceText, { color: colors.text }]}>
+                  You've recognized {selected.name} {evidenceCount} {evidenceCount === 1 ? 'time' : 'times'}.
+                </Text>
+                <Text style={[styles.stars, { color: colors.sandAccent }]}>
+                  {'★'.repeat(Math.min(5, evidenceCount))}{'☆'.repeat(5 - Math.min(5, evidenceCount))}
+                </Text>
+              </View>
+            )}
+
+            <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, shadowColor: colors.shadow }]}>
+              <Text style={[styles.sectionLabel, { color: colors.secondaryText }]}>Reflection</Text>
+              <Text style={[styles.reflectionPrompt, { color: colors.text, fontFamily: LighthouseFonts.quote }]}>
+                {selected.reflection}
+              </Text>
 
               {saved ? (
-                <Text style={[styles.savedText, { color: colors.tint }]}>Saved. Thank you for noticing.</Text>
+                <Text style={[styles.savedText, { color: colors.oceanAccent }]}>Saved. Thank you for noticing.</Text>
               ) : (
                 <>
                   <TextInput
-                    style={[styles.input, { color: colors.text, borderColor: colors.tabIconDefault }]}
+                    style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.background }]}
                     placeholder="Write it here, if you'd like..."
-                    placeholderTextColor={colors.tabIconDefault}
+                    placeholderTextColor={colors.secondaryText}
                     multiline
                     value={reflectionText}
                     onChangeText={setReflectionText}
                   />
                   <Pressable
-                    style={[styles.saveButton, { backgroundColor: colors.tint, opacity: !reflectionText.trim() || saving ? 0.5 : 1 }]}
+                    style={[styles.saveButton, { backgroundColor: colors.oceanAccent, opacity: !reflectionText.trim() || saving ? 0.5 : 1 }]}
                     onPress={handleSaveReflection}
                     disabled={!reflectionText.trim() || saving}
                   >
@@ -132,12 +147,12 @@ export default function ExploreLighthousesScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.text }]}>Explore Lighthouses</Text>
+        <Text style={[styles.title, { color: colors.text, fontFamily: LighthouseFonts.heading }]}>Explore Lighthouses</Text>
         <Pressable onPress={() => router.back()}>
-          <Text style={{ color: colors.tint }}>Close</Text>
+          <Text style={{ color: colors.oceanAccent }}>Close</Text>
         </Pressable>
       </View>
-      <Text style={[styles.subtitle, { color: colors.tabIconDefault }]}>
+      <Text style={[styles.subtitle, { color: colors.secondaryText }]}>
         Places to visit, not a list to finish.
       </Text>
       <FlatList
@@ -147,11 +162,11 @@ export default function ExploreLighthousesScreen() {
         columnWrapperStyle={styles.row}
         renderItem={({ item }) => (
           <Pressable
-            style={[styles.card, { backgroundColor: colors.background, borderColor: colors.tabIconDefault }]}
+            style={[styles.lighthouseCard, { backgroundColor: colors.card, borderColor: colors.border, shadowColor: colors.shadow }]}
             onPress={() => openLighthouse(item)}
           >
             <Text style={[styles.cardName, { color: colors.text }]}>{item.name}</Text>
-            <Text style={[styles.cardReminder, { color: colors.tabIconDefault }]} numberOfLines={2}>
+            <Text style={[styles.cardReminder, { color: colors.secondaryText }]} numberOfLines={2}>
               {item.reminder}
             </Text>
           </Pressable>
@@ -174,7 +189,6 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontWeight: '600',
   },
   subtitle: {
     fontSize: 14,
@@ -184,14 +198,18 @@ const styles = StyleSheet.create({
   row: {
     justifyContent: 'space-between',
   },
-  card: {
+  lighthouseCard: {
     width: '48%',
-    borderWidth: 1,
-    borderRadius: 16,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: LighthouseRadii.card,
     padding: 16,
     marginBottom: 14,
     minHeight: 110,
     justifyContent: 'center',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 8,
+    elevation: 1,
   },
   cardName: {
     fontSize: 17,
@@ -209,41 +227,57 @@ const styles = StyleSheet.create({
     marginTop: 10,
     marginBottom: 20,
   },
-  lighthouseName: {
-    fontSize: 28,
-    fontWeight: '600',
-    marginBottom: 24,
+  hero: {
+    alignItems: 'center',
+    marginBottom: 4,
   },
-  section: {
-    marginBottom: 28,
+  lighthouseName: {
+    fontSize: 30,
+    textAlign: 'center',
+  },
+  card: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: LighthouseRadii.card,
+    padding: 22,
+    marginTop: 16,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 12,
+    elevation: 2,
   },
   sectionLabel: {
-    fontSize: 13,
+    fontSize: 12,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 8,
+    letterSpacing: 1.5,
+    marginBottom: 12,
+    fontWeight: '600',
   },
   reminderText: {
     fontSize: 20,
     lineHeight: 28,
+    textAlign: 'center',
   },
   rememberText: {
-    fontSize: 17,
-    lineHeight: 24,
-    fontStyle: 'italic',
+    fontSize: 18,
+    lineHeight: 26,
   },
   evidenceText: {
     fontSize: 15,
     lineHeight: 22,
+    marginBottom: 10,
+  },
+  stars: {
+    fontSize: 18,
+    letterSpacing: 3,
   },
   reflectionPrompt: {
-    fontSize: 17,
-    lineHeight: 24,
+    fontSize: 18,
+    lineHeight: 26,
     marginBottom: 14,
   },
   input: {
-    borderWidth: 1,
-    borderRadius: 12,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 14,
     padding: 15,
     fontSize: 17,
     minHeight: 100,
@@ -252,7 +286,7 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     paddingVertical: 12,
-    borderRadius: 12,
+    borderRadius: 14,
     alignItems: 'center',
   },
   saveButtonText: {

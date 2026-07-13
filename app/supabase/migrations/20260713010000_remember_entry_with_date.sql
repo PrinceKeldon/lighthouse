@@ -1,8 +1,9 @@
--- SQL function to find a date-matched entry for the Remember mechanic
--- Matches month and day of created_at to current date. Returns created_at
--- alongside the text so the client can show "three weeks ago" style
--- relative phrasing. See migrations/20260713010000_remember_entry_with_date.sql
--- for the authoritative, deployed version of this function.
+-- The Lighthouse Experience Screen redesign turns "Remember" into a
+-- permanent part of the page that shows how long ago the entry was
+-- written ("Three weeks ago you wrote..."). That needs created_at
+-- alongside the text, so this widens the RPC's return type from a bare
+-- `text` to a one-row table. The return type change means we have to
+-- drop the old function before recreating it.
 drop function if exists public.get_remember_entry(uuid);
 
 create or replace function public.get_remember_entry(u_id uuid)

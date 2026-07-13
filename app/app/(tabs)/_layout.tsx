@@ -1,20 +1,23 @@
 import { Tabs } from 'expo-router';
 import { Text } from 'react-native';
 
-import Colors from '@/src/constants/Colors';
+import { LighthousePaper } from '@/src/constants/LighthouseTheme';
 import { useColorScheme } from '@/src/components/useColorScheme';
 import { useClientOnlyValue } from '@/src/components/useClientOnlyValue';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  const colors = LighthousePaper[colorScheme === 'dark' ? 'dark' : 'light'];
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme].tint,
+        tabBarActiveTintColor: colors.oceanAccent,
+        tabBarInactiveTintColor: colors.secondaryText,
         headerShown: useClientOnlyValue(false, true),
         tabBarStyle: {
-          backgroundColor: Colors[colorScheme].background,
+          backgroundColor: colors.background,
+          borderTopColor: colors.border,
         },
       }}>
       <Tabs.Screen

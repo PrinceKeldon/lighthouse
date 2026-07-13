@@ -1,149 +1,211 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView, TextInput, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { View, Text, StyleSheet, Pressable, ScrollView, TextInput, ActivityIndicator, Animated } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
-import Colors from '@/src/constants/Colors';
 import { CONTENT } from '@/src/constants/Content';
+import { LighthousePaper, LighthouseRadii, LighthouseFonts, formatRelativeTime } from '@/src/constants/LighthouseTheme';
 import { useColorScheme } from '@/src/components/useColorScheme';
 import { useEntries } from '@/src/hooks/useEntries';
-import affirmations from '@/assets/affirmations.json';
+import { LighthouseMark } from '@/src/components/LighthouseMark';
 
-function RememberOverlay({ entry, onDismiss }: { entry: string, onDismiss: () => void }) {
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme];
-  
-  return (
-    <View style={[styles.overlay, { backgroundColor: colors.tint }]}>
-      <View style={styles.overlayContent}>
-        <Text style={styles.rememberLabel}>Remember</Text>
-        <Text style={styles.rememberText}>{entry}</Text>
-        <Pressable style={styles.dismissButton} onPress={onDismiss}>
-          <Text style={styles.dismissText}>Close</Text>
-        </Pressable>
-      </View>
-    </View>
-  );
+type Lighthouse = { name: string; reminder: string; reflection: string };
+type RememberEntry = { text: string; createdAt: string };
+
+// Deterministic "Lighthouse of the day" — same seed + day-index approach
+// the screen used for affirmations before, just applied to CONTENT.lighthouses
+// so Today, Remember, and Evidence all speak about the same theme.
+async function pickLighthouseOfDay(): Promise<Lighthouse> {
+  let seed = await SecureStore.getItemAsync('install_seed');
+  if (seed === null) {
+    seed = Math.floor(Math.random() * 1000000).toString();
+    await SecureStore.setItemAsync('install_seed', seed);
+  }
+  const installSeed = parseInt(seed, 10);
+
+  const epoch = new Date('2026-01-01T00:00:00Z');
+  const now = new Date();
+  const dayIndex = Math.floor((now.getTime() - epoch.getTime()) / (1000 * 60 * 60 * 24));
+
+  const lighthouses = CONTENT.lighthouses as Lighthouse[];
+  const selectedIndex = (dayIndex + installSeed) % lighthouses.length;
+  return lighthouses[selectedIndex];
 }
 
 export default function TodayScreen() {
   const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme];
+  const colors = LighthousePaper[colorScheme === 'dark' ? 'dark' : 'light'];
+
+  const [lighthouse, setLighthouse] = useState<Lighthouse | null>(null);
   const [isReflecting, setIsReflecting] = useState(false);
   const [reflectionText, setReflectionText] = useState('');
-  const [rememberEntry, setRememberEntry] = useState<string | null>(null);
-  const [affirmation, setAffirmation] = useState('');
-  const [recentEntries, setRecentEntries] = useState<any[]>([]);
-  const { createEntry, getRememberEntry, getRecentEntries, loading } = useEntries();
+  const [rememberEntry, setRememberEntry] = useState<RememberEntry | null>(null);
+  const [evidenceCount, setEvidenceCount] = useState(0);
+  const [visitCount, setVisitCount] = useState<number | null>(null);
+  const [saving, setSaving] = useState(false);
 
-  const loadTodayData = useCallback(async () => {
-    // Load remember entry
+  const { createEntry, findOrCreateStrength, getStrengths, getRememberEntry } = useEntries();
+
+  const fade = useRef(new Animated.Value(0)).current;
+  const rise = useRef(new Animated.Value(8)).current;
+
+  const loadTodayData = useCallback(async (currentLighthouse: Lighthouse) => {
     const entry = await getRememberEntry();
-    if (entry) setRememberEntry(entry);
-    
-    // Load recent reflections
-    const recent = await getRecentEntries();
-    setRecentEntries(recent);
-  }, [getRememberEntry, getRecentEntries]);
+    setRememberEntry(entry ? { text: entry.text, createdAt: entry.created_at } : null);
+
+    const strengths = await getStrengths();
+    const match = (strengths as { name: string; count: number }[]).find(
+      (s) => s.name.trim().toLowerCase() === currentLighthouse.name.trim().toLowerCase()
+    );
+    setEvidenceCount(match?.count ?? 0);
+  }, [getRememberEntry, getStrengths]);
 
   useEffect(() => {
     async function setupToday() {
-      // 1. Load or create install seed
-      let seed = await SecureStore.getItemAsync('install_seed');
-      if (seed === null) {
-        seed = Math.floor(Math.random() * 1000000).toString();
-        await SecureStore.setItemAsync('install_seed', seed);
-      }
-      const installSeed = parseInt(seed, 10);
+      const today = await pickLighthouseOfDay();
+      setLighthouse(today);
 
-      // 2. Compute dayIndex (days since Jan 1, 2026)
-      const epoch = new Date('2026-01-01T00:00:00Z');
-      const now = new Date();
-      const diffInMs = now.getTime() - epoch.getTime();
-      const dayIndex = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+      // Quiet visit counter — device-local, not a metric to optimise,
+      // just the "you keep returning" note at the bottom of the screen.
+      const stored = await SecureStore.getItemAsync('today_visit_count');
+      const nextCount = (stored ? parseInt(stored, 10) : 0) + 1;
+      await SecureStore.setItemAsync('today_visit_count', nextCount.toString());
+      setVisitCount(nextCount);
 
-      // 3. Deterministic selection
-      const selectedIndex = (dayIndex + installSeed) % affirmations.length;
-      setAffirmation(affirmations[selectedIndex].text);
+      await loadTodayData(today);
 
-      await loadTodayData();
+      Animated.parallel([
+        Animated.timing(fade, { toValue: 1, duration: 400, useNativeDriver: true }),
+        Animated.timing(rise, { toValue: 0, duration: 400, useNativeDriver: true }),
+      ]).start();
     }
     setupToday();
-  }, [loadTodayData]);
+  }, [loadTodayData, fade, rise]);
 
   const handleSaveReflection = async () => {
-    const result = await createEntry(reflectionText, undefined, 'daily_reflect');
-    if (result.success) {
-      setIsReflecting(false);
-      setReflectionText('');
-      await loadTodayData();
-    } else {
-      alert(`Could not save reflection: ${result.error?.message || 'Unknown error'}`);
+    if (!lighthouse || !reflectionText.trim()) return;
+    setSaving(true);
+    try {
+      const strengthResult = await findOrCreateStrength(lighthouse.name);
+      if (!strengthResult.success || !strengthResult.strength) {
+        alert('Could not save reflection.');
+        return;
+      }
+      const result = await createEntry(reflectionText, strengthResult.strength.id, 'daily_reflect');
+      if (result.success) {
+        setIsReflecting(false);
+        setReflectionText('');
+        await loadTodayData(lighthouse);
+      } else {
+        alert(`Could not save reflection: ${(result.error as any)?.message || 'Unknown error'}`);
+      }
+    } finally {
+      setSaving(false);
     }
   };
+
+  if (!lighthouse) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator color={colors.oceanAccent} />
+      </View>
+    );
+  }
+
+  const filledStars = Math.min(5, evidenceCount);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Text style={[styles.affirmation, { color: colors.text }]}>
-          {affirmation}
-        </Text>
+        <Animated.View style={{ opacity: fade, transform: [{ translateY: rise }], width: '100%' }}>
+          <View style={styles.hero}>
+            <LighthouseMark color={colors.oceanAccent} />
+            <Text style={[styles.eyebrow, { color: colors.secondaryText }]}>TODAY</Text>
+            <Text style={[styles.lighthouseName, { color: colors.text, fontFamily: LighthouseFonts.heading }]}>
+              {lighthouse.name}
+            </Text>
+          </View>
 
-        {!isReflecting ? (
-          <View style={styles.actionArea}>
-            <Pressable 
-              style={[styles.reflectButton, { borderColor: colors.tint }]} 
+          <View style={[styles.card, { backgroundColor: colors.card, shadowColor: colors.shadow, borderColor: colors.border }]}>
+            <Text style={[styles.cardLabel, { color: colors.secondaryText }]}>Today's Reminder</Text>
+            <Text style={[styles.reminderText, { color: colors.text, fontFamily: LighthouseFonts.quote }]}>
+              "{lighthouse.reminder}"
+            </Text>
+          </View>
+
+          {!isReflecting ? (
+            <Pressable
+              style={[styles.reflectButton, { borderColor: colors.oceanAccent }]}
               onPress={() => setIsReflecting(true)}
             >
-              <Text style={[styles.reflectButtonText, { color: colors.tint }]}>
-                Reflect on this...
-              </Text>
+              <Text style={[styles.reflectButtonText, { color: colors.oceanAccent }]}>Reflect</Text>
             </Pressable>
-
-            {recentEntries.length > 0 && (
-              <View style={styles.recentContainer}>
-                <Text style={[styles.recentTitle, { color: colors.tabIconDefault }]}>Recent Reflections</Text>
-                {recentEntries.map((entry, i) => (
-                  <Text key={i} style={[styles.recentText, { color: colors.text }]}>
-                    • {entry.text}
-                  </Text>
-                ))}
+          ) : (
+            <View style={[styles.card, { backgroundColor: colors.card, shadowColor: colors.shadow, borderColor: colors.border }]}>
+              <Text style={[styles.cardLabel, { color: colors.secondaryText }]}>Reflect</Text>
+              <Text style={[styles.prompt, { color: colors.text, fontFamily: LighthouseFonts.quote }]}>
+                {lighthouse.reflection}
+              </Text>
+              <TextInput
+                style={[styles.input, { color: colors.text, borderColor: colors.border }]}
+                placeholder="Share a moment..."
+                placeholderTextColor={colors.secondaryText}
+                multiline
+                value={reflectionText}
+                onChangeText={setReflectionText}
+              />
+              <View style={styles.reflectActions}>
+                <Pressable onPress={() => { setIsReflecting(false); setReflectionText(''); }} style={styles.cancelButton}>
+                  <Text style={{ color: colors.secondaryText }}>Cancel</Text>
+                </Pressable>
+                <Pressable
+                  style={[styles.saveButton, { backgroundColor: colors.oceanAccent, opacity: !reflectionText.trim() || saving ? 0.5 : 1 }]}
+                  onPress={handleSaveReflection}
+                  disabled={!reflectionText.trim() || saving}
+                >
+                  {saving ? <ActivityIndicator color="white" size="small" /> : <Text style={styles.saveButtonText}>Save Reflection</Text>}
+                </Pressable>
               </View>
-            )}
-          </View>
-        ) : (
-          <View style={styles.reflectArea}>
-            <Text style={[styles.prompt, { color: colors.text }]}>
-              {CONTENT.today.reflectionPrompt}
-            </Text>
-            <TextInput
-              style={[styles.input, { color: colors.text, borderColor: colors.tabIconDefault }]}
-              placeholder="Share a moment..."
-              placeholderTextColor={colors.tabIconDefault}
-              multiline
-              value={reflectionText}
-              onChangeText={setReflectionText}
-            />
-            <View style={styles.reflectActions}>
-              <Pressable onPress={() => setIsReflecting(false)} style={styles.cancelButton}>
-                <Text style={{ color: colors.text }}>Cancel</Text>
-              </Pressable>
-              <Pressable 
-                style={[styles.saveButton, { backgroundColor: colors.tint }]} 
-                onPress={handleSaveReflection}
-                disabled={!reflectionText.trim() || loading}
-              >
-                {loading ? <ActivityIndicator color="white" size="small" /> : <Text style={styles.saveButtonText}>Save</Text>}
-              </Pressable>
             </View>
-          </View>
-        )}
-      </ScrollView>
+          )}
 
-      {rememberEntry && (
-        <RememberOverlay 
-          entry={rememberEntry} 
-          onDismiss={() => setRememberEntry(null)} 
-        />
-      )}
+          {rememberEntry && (
+            <View style={[styles.card, { backgroundColor: colors.card, shadowColor: colors.shadow, borderColor: colors.border }]}>
+              <Text style={[styles.cardLabel, { color: colors.secondaryText }]}>Remember</Text>
+              <Text style={[styles.rememberText, { color: colors.text, fontFamily: LighthouseFonts.quote }]}>
+                "{rememberEntry.text}"
+              </Text>
+              <Text style={[styles.rememberWhen, { color: colors.secondaryText }]}>
+                {formatRelativeTime(rememberEntry.createdAt)}
+              </Text>
+            </View>
+          )}
+
+          {evidenceCount > 0 && (
+            <View style={[styles.card, { backgroundColor: colors.card, shadowColor: colors.shadow, borderColor: colors.border }]}>
+              <Text style={[styles.cardLabel, { color: colors.secondaryText }]}>Evidence</Text>
+              <Text style={[styles.evidenceName, { color: colors.text, fontFamily: LighthouseFonts.headingMedium }]}>
+                {lighthouse.name}
+              </Text>
+              <Text style={[styles.evidenceCount, { color: colors.secondaryText }]}>
+                Recognised {evidenceCount} {evidenceCount === 1 ? 'time' : 'times'}
+              </Text>
+              <Text style={[styles.stars, { color: colors.sandAccent }]}>
+                {'★'.repeat(filledStars)}{'☆'.repeat(5 - filledStars)}
+              </Text>
+            </View>
+          )}
+
+          {visitCount !== null && (
+            <View style={styles.footer}>
+              <View style={[styles.footerRule, { backgroundColor: colors.border }]} />
+              <Text style={[styles.footerText, { color: colors.secondaryText }]}>
+                You have quietly returned here {visitCount} {visitCount === 1 ? 'time' : 'times'}.{'\n'}
+                Every one of them mattered.
+              </Text>
+              <View style={[styles.footerRule, { backgroundColor: colors.border }]} />
+            </View>
+          )}
+        </Animated.View>
+      </ScrollView>
     </View>
   );
 }
@@ -153,75 +215,74 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    flex: 1,
     alignItems: 'center',
-    justifyContent: 'center',
-    padding: 30,
-    minHeight: '100%',
+    padding: 24,
+    paddingTop: 40,
+    paddingBottom: 60,
+    gap: 20,
   },
-  affirmation: {
-    fontSize: 28,
-    textAlign: 'center',
-    fontFamily: 'System',
-    marginBottom: 40,
-    lineHeight: 36,
-  },
-  actionArea: {
+  hero: {
     width: '100%',
     alignItems: 'center',
-    gap: 24,
+    marginBottom: 4,
+  },
+  eyebrow: {
+    fontSize: 12,
+    letterSpacing: 3,
+    marginBottom: 6,
+  },
+  lighthouseName: {
+    fontSize: 32,
+    textAlign: 'center',
+  },
+  card: {
+    width: '100%',
+    borderRadius: LighthouseRadii.card,
+    borderWidth: StyleSheet.hairlineWidth,
+    padding: 22,
+    marginTop: 16,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 12,
+    elevation: 2,
+  },
+  cardLabel: {
+    fontSize: 12,
+    textTransform: 'uppercase',
+    letterSpacing: 1.5,
+    marginBottom: 12,
+    fontWeight: '600',
+  },
+  reminderText: {
+    fontSize: 22,
+    lineHeight: 32,
+    textAlign: 'center',
   },
   reflectButton: {
     borderWidth: 1,
     paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 20,
+    paddingHorizontal: 28,
+    borderRadius: LighthouseRadii.pill,
     marginTop: 20,
+    alignSelf: 'center',
   },
   reflectButtonText: {
     fontSize: 16,
     fontWeight: '500',
   },
-  recentContainer: {
-    width: '100%',
-    marginTop: 20,
-    padding: 20,
-    borderRadius: 12,
-    backgroundColor: 'rgba(0,0,0,0.03)',
-    gap: 8,
-  },
-  recentTitle: {
-    fontSize: 13,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: 8,
-    fontWeight: '600',
-  },
-  recentText: {
-    fontSize: 15,
-    lineHeight: 22,
-    opacity: 0.8,
-  },
-  reflectArea: {
-    marginTop: 30,
-    width: '100%',
-    padding: 20,
-    backgroundColor: 'rgba(0,0,0,0.03)',
-    borderRadius: 12,
-    gap: 15,
-  },
   prompt: {
     fontSize: 18,
-    textAlign: 'center',
-    fontStyle: 'italic',
+    lineHeight: 26,
+    marginBottom: 16,
   },
   input: {
     borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: 14,
     padding: 15,
-    fontSize: 18,
+    fontSize: 17,
     minHeight: 100,
     textAlignVertical: 'top',
+    marginBottom: 16,
   },
   reflectActions: {
     flexDirection: 'row',
@@ -232,49 +293,48 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   saveButton: {
-    paddingVertical: 10,
+    paddingVertical: 12,
     paddingHorizontal: 20,
-    borderRadius: 10,
+    borderRadius: 14,
   },
   saveButtonText: {
     color: 'white',
     fontWeight: '600',
   },
-  overlay: {
-    ...StyleSheet.absoluteFill,
-    zIndex: 100,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 30,
-  },
-  overlayContent: {
-    alignItems: 'center',
-    width: '100%',
-  },
-  rememberLabel: {
-    color: 'white',
-    fontSize: 14,
-    textTransform: 'uppercase',
-    letterSpacing: 2,
-    marginBottom: 20,
-    opacity: 0.8,
-  },
   rememberText: {
-    color: 'white',
-    fontSize: 24,
+    fontSize: 19,
+    lineHeight: 27,
+    marginBottom: 10,
+  },
+  rememberWhen: {
+    fontSize: 13,
+  },
+  evidenceName: {
+    fontSize: 20,
+    marginBottom: 6,
+  },
+  evidenceCount: {
+    fontSize: 14,
+    marginBottom: 10,
+  },
+  stars: {
+    fontSize: 18,
+    letterSpacing: 3,
+  },
+  footer: {
+    width: '100%',
+    alignItems: 'center',
+    marginTop: 24,
+    gap: 18,
+  },
+  footerRule: {
+    width: '40%',
+    height: StyleSheet.hairlineWidth,
+  },
+  footerText: {
+    fontSize: 14,
+    lineHeight: 21,
     textAlign: 'center',
-    lineHeight: 32,
-    fontWeight: '500',
-    marginBottom: 40,
-  },
-  dismissButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-  },
-  dismissText: {
-    color: 'white',
-    fontSize: 16,
+    fontStyle: 'italic',
   },
 });
