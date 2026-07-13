@@ -65,18 +65,25 @@ function RootLayoutNav() {
   // native state restoration (Scene lifecycle), independent of whether
   // the process was actually force-quit — this can override
   // initialRouteName and land directly on a previous screen (e.g. Today)
-  // instead of welcome. Android doesn't have this mechanism, which is
-  // why this was only reproducible on iOS. This runs exactly once, on
-  // the very first mount, and does nothing on any navigation after that
-  // — it should never interrupt normal in-session use.
+  // instead of welcome. Android doesn't have this mechanism.
+  //
+  // IMPORTANT: usePathname() can be empty/unresolved on the very first
+  // render, before Expo Router finishes resolving the actual route. This
+  // effect deliberately depends on [pathname] and waits for a genuinely
+  // non-empty value before deciding anything — marking "checked" too
+  // early (on an empty pathname) would permanently skip the real check.
+  // Also: only /welcome itself is whitelisted. '/' is NOT excluded,
+  // since the tabs index route (Today) may itself resolve to '/'.
   useEffect(() => {
     if (hasCheckedInitialRoute.current) return;
+    if (!pathname) return;
+
     hasCheckedInitialRoute.current = true;
 
-    if (pathname && pathname !== '/welcome' && pathname !== '/') {
+    if (pathname !== '/welcome') {
       router.replace('/welcome');
     }
-  }, []);
+  }, [pathname]);
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
