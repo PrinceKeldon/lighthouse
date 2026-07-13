@@ -1,23 +1,34 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { supabase } from '../api/supabase';
 import { Database } from '../types/database';
 
 export function useEntries() {
   const [loading, setLoading] = useState(false);
 
-  async function createEntry(text: string, strengthId?: string, promptId?: string) {
+  // Every function below is wrapped in useCallback with an empty
+  // dependency array. None of them close over any props or state that
+  // changes — they only reference the module-level `supabase` client
+  // and their own parameters — so a stable identity is correct, not
+  // just a performance nicety. Without this, any component that uses
+  // one of these functions inside a useEffect/useCallback dependency
+  // array (e.g. the Today screen's loadTodayData) gets a NEW function
+  // reference on every render, which re-triggers the effect, which
+  // re-renders, which creates new references again — an infinite loop.
+  // This was confirmed as the root cause of the runaway visit-counter
+  // and eventual crash reported on 2026-07-13.
+
+  const createEntry = useCallback(async (text: string, strengthId?: string, promptId?: string) => {
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
-       const { error } = await (supabase.from('entries') as any).insert({
-          user_id: user.id,
-          text: text,
-          strength_tags: strengthId ? [strengthId] : [],
-          prompt_id: promptId,
-        });
-
+      const { error } = await (supabase.from('entries') as any).insert({
+        user_id: user.id,
+        text: text,
+        strength_tags: strengthId ? [strengthId] : [],
+        prompt_id: promptId,
+      });
 
       if (error) throw error;
       return { success: true };
@@ -27,11 +38,11 @@ export function useEntries() {
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
 
   // Real Strengths list, with a live entry count per Strength, computed
   // from actual entries rather than any hardcoded/mock source.
-  async function getStrengths() {
+  const getStrengths = useCallback(async () => {
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -70,12 +81,12 @@ export function useEntries() {
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
 
   // Find-or-create by name (case-insensitive), matching 06's "the app
   // offers suggestions or the user types their own" rule — never creates
   // a silent duplicate Strength for the same name.
-  async function findOrCreateStrength(name: string) {
+  const findOrCreateStrength = useCallback(async (name: string) => {
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -108,9 +119,9 @@ export function useEntries() {
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
 
-  async function getEntriesForStrength(strengthId: string) {
+  const getEntriesForStrength = useCallback(async (strengthId: string) => {
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -120,7 +131,8 @@ export function useEntries() {
         .from('entries')
         .select('*')
         .eq('user_id', user.id)
-        .contains('strength_tags', [strengthId]);
+        .contains('strength_tags', [strengthId])
+        .order('created_at', { ascending: true });
 
       if (error) throw error;
 
@@ -131,18 +143,15 @@ export function useEntries() {
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
 
-  async function getRememberEntry(): Promise<{ text: string; created_at: string } | null> {
+  const getRememberEntry = useCallback(async (): Promise<{ text: string; created_at: string } | null> => {
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
       // Milestone 0: Calendar-date matching (month/day) per 10 & 11.
-      // The RPC now returns a one-row table (text, created_at) rather
-      // than bare text, so the client can show relative phrasing like
-      // "three weeks ago" instead of just the quote.
       const { data, error } = await (supabase as any).rpc('get_remember_entry', {
         u_id: user.id
       });
@@ -156,9 +165,9 @@ export function useEntries() {
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
 
-  async function getRecentEntries(limit = 5) {
+  const getRecentEntries = useCallback(async (limit = 5) => {
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -179,7 +188,7 @@ export function useEntries() {
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
 
   return { createEntry, getStrengths, findOrCreateStrength, getEntriesForStrength, getRememberEntry, getRecentEntries, loading };
 }
