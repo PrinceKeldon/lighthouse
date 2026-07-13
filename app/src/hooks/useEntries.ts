@@ -155,5 +155,28 @@ export function useEntries() {
     }
   }
 
-  return { createEntry, getStrengths, findOrCreateStrength, getEntriesForStrength, getRememberEntry, loading };
+  async function getRecentEntries(limit = 5) {
+    setLoading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      const { data, error } = await supabase
+        .from('entries')
+        .select('text, created_at')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(limit);
+
+      if (error) throw error;
+      return data || [];
+    } catch (e) {
+      console.error('Fetch recent entries error:', e);
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return { createEntry, getStrengths, findOrCreateStrength, getEntriesForStrength, getRememberEntry, getRecentEntries, loading };
 }

@@ -31,7 +31,18 @@ export default function TodayScreen() {
   const [reflectionText, setReflectionText] = useState('');
   const [rememberEntry, setRememberEntry] = useState<string | null>(null);
   const [affirmation, setAffirmation] = useState('');
-  const { createEntry, getRememberEntry, loading } = useEntries();
+  const [recentEntries, setRecentEntries] = useState<any[]>([]);
+  const { createEntry, getRememberEntry, getRecentEntries, loading } = useEntries();
+
+  const loadTodayData = useCallback(async () => {
+    // Load remember entry
+    const entry = await getRememberEntry();
+    if (entry) setRememberEntry(entry);
+    
+    // Load recent reflections
+    const recent = await getRecentEntries();
+    setRecentEntries(recent);
+  }, [getRememberEntry, getRecentEntries]);
 
   useEffect(() => {
     async function setupToday() {
@@ -53,20 +64,19 @@ export default function TodayScreen() {
       const selectedIndex = (dayIndex + installSeed) % affirmations.length;
       setAffirmation(affirmations[selectedIndex].text);
 
-      // Load remember entry
-      const entry = await getRememberEntry();
-      if (entry) setRememberEntry(entry);
+      await loadTodayData();
     }
     setupToday();
-  }, []);
+  }, [loadTodayData]);
 
   const handleSaveReflection = async () => {
     const result = await createEntry(reflectionText, undefined, 'daily_reflect');
     if (result.success) {
       setIsReflecting(false);
       setReflectionText('');
+      await loadTodayData();
     } else {
-      alert('Could not save reflection.');
+      alert(`Could not save reflection: ${result.error?.message || 'Unknown error'}`);
     }
   };
 
@@ -78,14 +88,27 @@ export default function TodayScreen() {
         </Text>
 
         {!isReflecting ? (
-          <Pressable 
-            style={[styles.reflectButton, { borderColor: colors.tint }]} 
-            onPress={() => setIsReflecting(true)}
-          >
-            <Text style={[styles.reflectButtonText, { color: colors.tint }]}>
-              Reflect on this...
-            </Text>
-          </Pressable>
+          <View style={styles.actionArea}>
+            <Pressable 
+              style={[styles.reflectButton, { borderColor: colors.tint }]} 
+              onPress={() => setIsReflecting(true)}
+            >
+              <Text style={[styles.reflectButtonText, { color: colors.tint }]}>
+                Reflect on this...
+              </Text>
+            </Pressable>
+
+            {recentEntries.length > 0 && (
+              <View style={styles.recentContainer}>
+                <Text style={[styles.recentTitle, { color: colors.tabIconDefault }]}>Recent Reflections</Text>
+                {recentEntries.map((entry, i) => (
+                  <Text key={i} style={[styles.recentText, { color: colors.text }]}>
+                    • {entry.text}
+                  </Text>
+                ))}
+              </View>
+            )}
+          </View>
         ) : (
           <View style={styles.reflectArea}>
             <Text style={[styles.prompt, { color: colors.text }]}>
@@ -143,6 +166,11 @@ const styles = StyleSheet.create({
     marginBottom: 40,
     lineHeight: 36,
   },
+  actionArea: {
+    width: '100%',
+    alignItems: 'center',
+    gap: 24,
+  },
   reflectButton: {
     borderWidth: 1,
     paddingVertical: 12,
@@ -153,6 +181,26 @@ const styles = StyleSheet.create({
   reflectButtonText: {
     fontSize: 16,
     fontWeight: '500',
+  },
+  recentContainer: {
+    width: '100%',
+    marginTop: 20,
+    padding: 20,
+    borderRadius: 12,
+    backgroundColor: 'rgba(0,0,0,0.03)',
+    gap: 8,
+  },
+  recentTitle: {
+    fontSize: 13,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 8,
+    fontWeight: '600',
+  },
+  recentText: {
+    fontSize: 15,
+    lineHeight: 22,
+    opacity: 0.8,
   },
   reflectArea: {
     marginTop: 30,
