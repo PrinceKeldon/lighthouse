@@ -65,9 +65,13 @@ export default function TodayScreen() {
 
       // Quiet visit counter — device-local, not a metric to optimise,
       // just the "you keep returning" note at the bottom of the screen.
-      const stored = await SecureStore.getItemAsync('today_visit_count');
+      // Storage key renamed (was 'today_visit_count') to invalidate a
+      // corrupted count left over from the pre-useCallback-fix infinite
+      // loop, without requiring a full app reset that would orphan any
+      // existing Strengths/entries under the current anonymous session.
+      const stored = await SecureStore.getItemAsync('today_visit_count_v2');
       const nextCount = (stored ? parseInt(stored, 10) : 0) + 1;
-      await SecureStore.setItemAsync('today_visit_count', nextCount.toString());
+      await SecureStore.setItemAsync('today_visit_count_v2', nextCount.toString());
       setVisitCount(nextCount);
 
       await loadTodayData(today);
