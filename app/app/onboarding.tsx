@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, Pressable, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import Colors from '@/src/constants/Colors';
 import { CONTENT } from '@/src/constants/Content';
 import { useColorScheme } from '@/src/components/useColorScheme';
 import { useEntries } from '@/src/hooks/useEntries';
+import { hasCompletedOnboarding } from '@/src/api/supabase';
 
 // Light starter suggestions only — per 06-user-journeys.md, the app
 // offers a few gentle tags or the user names their own. Never a full
@@ -16,10 +17,33 @@ export default function OnboardingScreen() {
   const router = useRouter();
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme];
+  const [checkingReturningUser, setCheckingReturningUser] = useState(true);
   const [step, setStep] = useState<'entry' | 'strength'>('entry');
   const [entry, setEntry] = useState('');
   const [strengthName, setStrengthName] = useState('');
   const { createEntry, findOrCreateStrength, loading } = useEntries();
+
+  // Onboarding is a one-time Day 1 flow, not something re-triggered every
+  // launch. A returning user (same persisted session) goes straight to
+  // Today instead — this also prevents creating a duplicate orphaned
+  // entry/Strength every time the app reopens.
+  useEffect(() => {
+    hasCompletedOnboarding().then((done) => {
+      if (done) {
+        router.replace('/(tabs)');
+      } else {
+        setCheckingReturningUser(false);
+      }
+    });
+  }, []);
+
+  if (checkingReturningUser) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <ActivityIndicator />
+      </View>
+    );
+  }
 
   const handleContinueToStrength = () => {
     if (!entry.trim()) return;

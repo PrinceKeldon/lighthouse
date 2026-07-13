@@ -34,3 +34,27 @@ export async function ensureSession() {
   }
   return data.session;
 }
+
+// A returning user (same persisted anonymous session, reopening the app
+// minutes or days later) should never see onboarding again — that's a
+// one-time Day 1 flow, not something re-triggered every launch. Presence
+// of at least one Entry is used as the signal, since onboarding always
+// creates one as its final step.
+export async function hasCompletedOnboarding(): Promise<boolean> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return false;
+
+  const { count, error } = await supabase
+    .from('entries')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', user.id);
+
+  if (error) {
+    console.error('hasCompletedOnboarding check failed:', error);
+    // Fail safe toward showing onboarding rather than crashing — worst
+    // case is one redundant entry, not a broken app.
+    return false;
+  }
+
+  return (count ?? 0) > 0;
+}

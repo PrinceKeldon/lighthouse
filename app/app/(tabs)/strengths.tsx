@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, Pressable, Modal, TextInput, ActivityIndicator } from 'react-native';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import Colors from '@/src/constants/Colors';
 import { CONTENT } from '@/src/constants/Content';
 import { useColorScheme } from '@/src/components/useColorScheme';
@@ -9,6 +9,7 @@ import { useEntries } from '@/src/hooks/useEntries';
 type StrengthWithCount = { id: string; name: string; count: number };
 
 export default function StrengthsScreen() {
+  const router = useRouter();
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme];
   const { createEntry, getStrengths, findOrCreateStrength, getEntriesForStrength, loading } = useEntries();
@@ -90,6 +91,17 @@ export default function StrengthsScreen() {
           <Text style={styles.addButtonText}>+ New Entry</Text>
         </Pressable>
       </View>
+
+      {!selectedStrength && (
+        <Pressable
+          style={[styles.exploreCard, { borderColor: colors.tint }]}
+          onPress={() => router.push('/modal')}
+        >
+          <Text style={[styles.exploreCardText, { color: colors.tint }]}>
+            ✦ Explore Lighthouses
+          </Text>
+        </Pressable>
+      )}
 
       {selectedStrength ? (
         <View style={styles.detailView}>
@@ -189,6 +201,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
     marginTop: 10,
+  },
+  exploreCard: {
+    borderWidth: 1,
+    borderRadius: 14,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  exploreCardText: {
+    fontSize: 15,
+    fontWeight: '600',
   },
   title: {
     fontSize: 24,
