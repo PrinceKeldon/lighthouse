@@ -73,6 +73,12 @@ Work:
 - Smart/predictive Remember selection (beyond calendar-date matching) —
   only meaningful once there's enough real entry data across real users
   to make "smart" mean something.
+- **Explore Lighthouses** (see `13-explore-lighthouses-vision.md`) —
+  the card-based, living-Strengths reimagining of the Strengths screen.
+  A genuinely strong direction, deliberately not built during Milestone 0
+  or the initial beta, since it changes IA, content strategy, and the
+  paid tier simultaneously — exactly the kind of surface area that should
+  wait until the simpler loop is proven on its own.
 
 **Trigger to enter this phase:** Phase 1 validated the loop, Phase 2 made
 the app safe for strangers. Growth work before either of those is
@@ -96,6 +102,13 @@ Everything ADR-002 v1.1 named as Plus-tier value, not yet built:
 - Future AI companion features — introduced last, deliberately. AI is
   introduced only after Lighthouse has earned enough user trust that AI
   enhances an existing relationship rather than attempts to create one.
+
+**See `14-lighthouse-plus-vision.md`** for a fully developed elaboration
+of this phase — eight pillars, a "Reflection Companion" (not "AI
+Companion") framing, and a "Letters to Tomorrow" feature idea. That
+document also flags a real, unresolved pricing conflict with ADR-002 v1.1
+that needs deliberate reconciliation before this phase begins, not a
+default toward whichever number was proposed most recently.
 
 **Trigger to enter this phase:** a real subscriber base exists to build
 these for. Building Plus-tier depth before anyone has converted to Plus
