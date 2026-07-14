@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "app",
+    "name": "Lighthouse",
     "slug": "app",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -11,6 +11,7 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.lighthouse.app",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -38,6 +39,13 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "784f4278-1c31-4dc6-a16d-153f507191bf"
+      }
+    },
+    "owner": "agent1"
   }
 }
