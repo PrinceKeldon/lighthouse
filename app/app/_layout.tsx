@@ -101,6 +101,16 @@ function RootLayoutNav() {
             headerShadowVisible: false,
           }}
         />
+        <Stack.Screen
+          name="terms"
+          options={{
+            title: 'Terms of Service',
+            headerStyle: { backgroundColor: colors.background },
+            headerTintColor: colors.oceanAccent,
+            headerTitleStyle: { color: colors.text, fontFamily: LighthouseFonts.headingMedium },
+            headerShadowVisible: false,
+          }}
+        />
         {/* modal.tsx renders its own header (title + Close), so the native
             one is hidden here to avoid a duplicate title bar. */}
         <Stack.Screen name="modal" options={{ presentation: 'modal', headerShown: false }} />

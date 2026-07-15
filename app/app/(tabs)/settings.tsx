@@ -38,11 +38,14 @@ export default function SettingsScreen() {
   }, []);
 
   const handleSupportPress = async () => {
-    // STUBBED: In a real app, this would trigger the native IAP flow.
-    // For Milestone 0, we just log the attempt and simulate a successful upgrade
-    // to verify the UI state change.
-    console.log('Initiating IAP flow for Lighthouse Plus...');
-    alert('This would now trigger the App Store / Play Store purchase flow.');
+    // Purchase flow is not yet wired to a live App Store/Play Store
+    // product (tracked in 12-roadmap.md's Release Gate). This is
+    // intentionally honest rather than simulating a fake purchase —
+    // per ADR-002, nothing about pricing should ever feel unclear.
+    Alert.alert(
+      'Support Lighthouse',
+      "This is almost ready. We'll let you know the moment it's here."
+    );
   };
 
   const handleDeleteAccount = async () => {
@@ -83,6 +86,9 @@ export default function SettingsScreen() {
             <Link href="/privacy" style={[styles.label, { color: colors.oceanAccent }]}>Privacy Policy</Link>
             <Text style={[styles.label, { color: colors.secondaryText }]}>{CONTENT.settings.version}</Text>
           </View>
+          <View style={styles.row}>
+            <Link href="/terms" style={[styles.label, { color: colors.oceanAccent }]}>Terms of Service</Link>
+          </View>
         </View>
       </View>
 
@@ -105,6 +111,11 @@ export default function SettingsScreen() {
 
         <Text style={[styles.supportNote, { color: colors.secondaryText }]}>
           {CONTENT.settings.subscription.supportNote}
+        </Text>
+
+        <Text style={[styles.comingSoonNote, { color: colors.secondaryText }]}>
+          Lighthouse+ is on its way — deeper reflection tools, built the
+          same quiet way as everything here. No rush; we'll let you know.
         </Text>
       </View>
 
@@ -193,6 +204,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
     lineHeight: 20,
+  },
+  comingSoonNote: {
+    marginTop: 20,
+    fontSize: 13,
+    textAlign: 'center',
+    lineHeight: 19,
+    fontStyle: 'italic',
+    opacity: 0.8,
   },
   deleteButton: {
     padding: 15,

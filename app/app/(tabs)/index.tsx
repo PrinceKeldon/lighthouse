@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView, TextInput, ActivityIndicator, Animated } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ScrollView, TextInput, ActivityIndicator, Animated, Alert } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import { CONTENT } from '@/src/constants/Content';
 import { LighthousePaper, LighthouseRadii, LighthouseFonts, formatRelativeTime } from '@/src/constants/LighthouseTheme';
@@ -90,7 +90,7 @@ export default function TodayScreen() {
     try {
       const strengthResult = await findOrCreateStrength(lighthouse.name);
       if (!strengthResult.success || !strengthResult.strength) {
-        alert('Could not save reflection.');
+        Alert.alert('', "That didn't save — mind trying again in a moment?");
         return;
       }
       const result = await createEntry(reflectionText, strengthResult.strength.id, 'daily_reflect');
@@ -99,7 +99,10 @@ export default function TodayScreen() {
         setReflectionText('');
         await loadTodayData(lighthouse);
       } else {
-        alert(`Could not save reflection: ${(result.error as any)?.message || 'Unknown error'}`);
+        // Log the real error for debugging; never show technical error
+        // strings to the user (09-copy-guidelines.md).
+        console.error('Save reflection failed:', result.error);
+        Alert.alert('', "That didn't save — mind trying again in a moment?");
       }
     } finally {
       setSaving(false);

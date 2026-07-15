@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, Pressable, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TextInput, Pressable, ActivityIndicator, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { CONTENT } from '@/src/constants/Content';
 import { LighthousePaper, LighthouseFonts } from '@/src/constants/LighthouseTheme';
@@ -56,7 +56,7 @@ export default function OnboardingScreen() {
 
     const strengthResult = await findOrCreateStrength(strengthName);
     if (!strengthResult.success || !strengthResult.strength) {
-      alert('Something went wrong. Please try again.');
+      Alert.alert('', "That didn't save — mind trying again in a moment?");
       return;
     }
 
@@ -64,7 +64,7 @@ export default function OnboardingScreen() {
     if (result.success) {
       router.replace('/(tabs)');
     } else {
-      alert('Something went wrong. Please try again.');
+      Alert.alert('', "That didn't save — mind trying again in a moment?");
     }
   };
 

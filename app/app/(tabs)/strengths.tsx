@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, Pressable, Modal, TextInput, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Pressable, Modal, TextInput, ActivityIndicator, Alert } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { CONTENT } from '@/src/constants/Content';
 import { LighthousePaper, LighthouseRadii, LighthouseFonts } from '@/src/constants/LighthouseTheme';
@@ -42,7 +42,7 @@ export default function StrengthsScreen() {
 
     const strengthResult = await findOrCreateStrength(newStrengthName);
     if (!strengthResult.success || !strengthResult.strength) {
-      alert('Could not save Strength.');
+      Alert.alert('', "That didn't save — mind trying again in a moment?");
       return;
     }
 
@@ -58,7 +58,7 @@ export default function StrengthsScreen() {
       setEntryModalVisible(false);
       loadStrengths();
     } else {
-      alert('Could not save entry.');
+      Alert.alert('', "That didn't save — mind trying again in a moment?");
     }
   };
 

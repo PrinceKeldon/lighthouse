@@ -82,7 +82,7 @@ update.
 
 ### Contact
 
-[Insert real contact method before publishing.]
+[support@keldontech.online]
 
 ---
 
