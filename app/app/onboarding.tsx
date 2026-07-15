@@ -87,7 +87,7 @@ export default function OnboardingScreen() {
           />
 
           <Pressable
-            style={[styles.button, { backgroundColor: colors.oceanAccent, opacity: !entry.trim() ? 0.5 : 1 }]}
+            style={[styles.button, { backgroundColor: colors.sage, opacity: !entry.trim() ? 0.5 : 1 }]}
             onPress={handleContinueToStrength}
             disabled={!entry.trim()}
           >
@@ -116,12 +116,12 @@ export default function OnboardingScreen() {
                 styles.chip,
                 {
                   borderColor: colors.oceanAccent,
-                  backgroundColor: strengthName === suggestion ? colors.oceanAccent : 'transparent',
+                  backgroundColor: strengthName === suggestion ? colors.sage : 'transparent',
                 },
               ]}
               onPress={() => setStrengthName(suggestion)}
             >
-              <Text style={{ color: strengthName === suggestion ? 'white' : colors.oceanAccent }}>
+              <Text style={{ color: strengthName === suggestion ? '#2F3A45' : colors.oceanAccent }}>
                 {suggestion}
               </Text>
             </Pressable>
@@ -137,7 +137,7 @@ export default function OnboardingScreen() {
         />
 
         <Pressable
-          style={[styles.button, { backgroundColor: colors.oceanAccent, opacity: loading || !strengthName.trim() ? 0.7 : 1 }]}
+          style={[styles.button, { backgroundColor: colors.sage, opacity: loading || !strengthName.trim() ? 0.7 : 1 }]}
           onPress={handleComplete}
           disabled={!strengthName.trim() || loading}
         >
@@ -203,7 +203,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   buttonText: {
-    color: 'white',
+    color: '#2F3A45',
     fontSize: 18,
     fontWeight: '600',
   },

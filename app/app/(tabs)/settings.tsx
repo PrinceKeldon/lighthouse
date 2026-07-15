@@ -103,7 +103,7 @@ export default function SettingsScreen() {
         </View>
 
         <Pressable
-          style={[styles.supportButton, { backgroundColor: colors.oceanAccent }]}
+          style={[styles.supportButton, { backgroundColor: colors.sage }]}
           onPress={handleSupportPress}
         >
           <Text style={styles.supportButtonText}>{CONTENT.settings.subscription.supportButton}</Text>
@@ -195,7 +195,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   supportButtonText: {
-    color: 'white',
+    color: '#2F3A45',
     fontSize: 16,
     fontWeight: '600',
   },

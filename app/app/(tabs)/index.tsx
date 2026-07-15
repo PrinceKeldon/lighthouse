@@ -164,11 +164,11 @@ export default function TodayScreen() {
                   <Text style={{ color: colors.secondaryText }}>Cancel</Text>
                 </Pressable>
                 <Pressable
-                  style={[styles.saveButton, { backgroundColor: colors.oceanAccent, opacity: !reflectionText.trim() || saving ? 0.5 : 1 }]}
+                  style={[styles.saveButton, { backgroundColor: colors.sage, opacity: !reflectionText.trim() || saving ? 0.5 : 1 }]}
                   onPress={handleSaveReflection}
                   disabled={!reflectionText.trim() || saving}
                 >
-                  {saving ? <ActivityIndicator color="white" size="small" /> : <Text style={styles.saveButtonText}>Save Reflection</Text>}
+                  {saving ? <ActivityIndicator color="#2F3A45" size="small" /> : <Text style={styles.saveButtonText}>Save Reflection</Text>}
                 </Pressable>
               </View>
             </View>
@@ -305,7 +305,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
   },
   saveButtonText: {
-    color: 'white',
+    color: '#2F3A45',
     fontWeight: '600',
   },
   rememberText: {

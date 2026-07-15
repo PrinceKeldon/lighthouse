@@ -85,7 +85,7 @@ export default function StrengthsScreen() {
       <View style={styles.header}>
         <Text style={[styles.title, { color: colors.text, fontFamily: LighthouseFonts.heading }]}>Your Strengths</Text>
         <Pressable
-          style={[styles.addButton, { backgroundColor: colors.oceanAccent }]}
+          style={[styles.addButton, { backgroundColor: colors.sage }]}
           onPress={() => {
             setNewStrengthName(selectedStrength?.name || '');
             setEntryModalVisible(true);
@@ -183,11 +183,11 @@ export default function StrengthsScreen() {
                 <Text style={{ color: colors.secondaryText }}>Cancel</Text>
               </Pressable>
               <Pressable
-                style={[styles.saveButton, { backgroundColor: colors.oceanAccent }]}
+                style={[styles.saveButton, { backgroundColor: colors.sage }]}
                 onPress={handleCreateEntry}
                 disabled={!newEntryText.trim() || !newStrengthName.trim() || loading}
               >
-                {loading ? <ActivityIndicator color="white" size="small" /> : <Text style={styles.saveButtonText}>Save</Text>}
+                {loading ? <ActivityIndicator color="#2F3A45" size="small" /> : <Text style={styles.saveButtonText}>Save</Text>}
               </Pressable>
             </View>
           </View>
@@ -233,7 +233,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   addButtonText: {
-    color: 'white',
+    color: '#2F3A45',
     fontSize: 14,
     fontWeight: '600',
   },
@@ -339,7 +339,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
   },
   saveButtonText: {
-    color: 'white',
+    color: '#2F3A45',
     fontWeight: '600',
   },
 });
