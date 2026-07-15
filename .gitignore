@@ -1,0 +1,17 @@
+# macOS
+.DS_Store
+
+# Editor/agent tooling — not part of the app
+.continue/
+.vscode/
+
+# Dependencies
+node_modules/
+
+# Build artifacts / archives — never commit zipped snapshots of the repo
+*.zip
+
+# Environment files (secrets) — must never be committed
+.env
+.env.*
+.env*.local
