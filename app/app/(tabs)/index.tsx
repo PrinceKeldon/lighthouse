@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView, TextInput, ActivityIndicator, Animated, Alert } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ScrollView, TextInput, ActivityIndicator, Animated, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import { CONTENT } from '@/src/constants/Content';
 import { LighthousePaper, LighthouseRadii, LighthouseFonts, formatRelativeTime } from '@/src/constants/LighthouseTheme';
@@ -46,6 +46,8 @@ export default function TodayScreen() {
 
   const fade = useRef(new Animated.Value(0)).current;
   const rise = useRef(new Animated.Value(8)).current;
+  const scrollViewRef = useRef<ScrollView>(null);
+  const reflectCardY = useRef(0);
 
   const loadTodayData = useCallback(async (currentLighthouse: Lighthouse) => {
     const entry = await getRememberEntry();
@@ -120,8 +122,16 @@ export default function TodayScreen() {
   const filledStars = Math.min(5, evidenceCount);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+    <KeyboardAvoidingView
+      style={[styles.container, { backgroundColor: colors.background }]}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+    >
+      <ScrollView
+        ref={scrollViewRef}
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+      >
         <Animated.View style={{ opacity: fade, transform: [{ translateY: rise }], width: '100%' }}>
           <View style={styles.hero}>
             <LighthouseMark color={colors.oceanAccent} />
@@ -146,7 +156,10 @@ export default function TodayScreen() {
               <Text style={[styles.reflectButtonText, { color: colors.oceanAccent }]}>Reflect</Text>
             </Pressable>
           ) : (
-            <View style={[styles.card, { backgroundColor: colors.card, shadowColor: colors.shadow, borderColor: colors.border }]}>
+            <View
+              style={[styles.card, { backgroundColor: colors.card, shadowColor: colors.shadow, borderColor: colors.border }]}
+              onLayout={(e) => { reflectCardY.current = e.nativeEvent.layout.y; }}
+            >
               <Text style={[styles.cardLabel, { color: colors.secondaryText }]}>Reflect</Text>
               <Text style={[styles.prompt, { color: colors.text, fontFamily: LighthouseFonts.quote }]}>
                 {lighthouse.reflection}
@@ -158,6 +171,14 @@ export default function TodayScreen() {
                 multiline
                 value={reflectionText}
                 onChangeText={setReflectionText}
+                onFocus={() => {
+                  // Give the keyboard's slide-up animation a beat, then bring
+                  // the whole Reflect card (prompt + input + Save button)
+                  // above it, rather than leaving it to chance.
+                  setTimeout(() => {
+                    scrollViewRef.current?.scrollTo({ y: Math.max(0, reflectCardY.current - 24), animated: true });
+                  }, 150);
+                }}
               />
               <View style={styles.reflectActions}>
                 <Pressable onPress={() => { setIsReflecting(false); setReflectionText(''); }} style={styles.cancelButton}>
@@ -213,7 +234,7 @@ export default function TodayScreen() {
           )}
         </Animated.View>
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

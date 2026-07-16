@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, Pressable, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, TextInput, Pressable, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { CONTENT } from '@/src/constants/Content';
 import { LighthousePaper, LighthouseFonts } from '@/src/constants/LighthouseTheme';
@@ -70,8 +70,15 @@ export default function OnboardingScreen() {
 
   if (step === 'entry') {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <View style={styles.content}>
+      <KeyboardAvoidingView
+        style={[styles.container, { backgroundColor: colors.background }]}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={[styles.content, { flexGrow: 1, justifyContent: 'center' }]}
+          keyboardShouldPersistTaps="handled"
+        >
           <LighthouseMark color={colors.oceanAccent} />
           <Text style={[styles.prompt, { color: colors.text, fontFamily: LighthouseFonts.quote }]}>
             {CONTENT.onboarding.prompt}
@@ -93,14 +100,21 @@ export default function OnboardingScreen() {
           >
             <Text style={styles.buttonText}>Continue</Text>
           </Pressable>
-        </View>
-      </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     );
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={styles.content}>
+    <KeyboardAvoidingView
+      style={[styles.container, { backgroundColor: colors.background }]}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={[styles.content, { flexGrow: 1, justifyContent: 'center' }]}
+        keyboardShouldPersistTaps="handled"
+      >
         <Text style={[styles.prompt, { color: colors.text, fontFamily: LighthouseFonts.headingMedium }]}>
           What does this say about you?
         </Text>
@@ -147,19 +161,18 @@ export default function OnboardingScreen() {
             <Text style={styles.buttonText}>Continue</Text>
           )}
         </Pressable>
-      </View>
-    </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    padding: 30,
   },
   content: {
     gap: 20,
+    padding: 30,
     alignItems: 'stretch',
   },
   prompt: {

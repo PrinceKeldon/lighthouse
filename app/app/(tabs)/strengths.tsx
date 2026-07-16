@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, Pressable, Modal, TextInput, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Pressable, Modal, TextInput, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { CONTENT } from '@/src/constants/Content';
 import { LighthousePaper, LighthouseRadii, LighthouseFonts } from '@/src/constants/LighthouseTheme';
@@ -149,8 +149,15 @@ export default function StrengthsScreen() {
         visible={isEntryModalVisible}
         onRequestClose={() => setEntryModalVisible(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
+        <KeyboardAvoidingView
+          style={styles.modalOverlay}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
+          <ScrollView
+            style={[styles.modalContent, { backgroundColor: colors.background }]}
+            contentContainerStyle={{ gap: 20, padding: 30, paddingBottom: 50 }}
+            keyboardShouldPersistTaps="handled"
+          >
             <Text style={[styles.modalTitle, { color: colors.text, fontFamily: LighthouseFonts.headingMedium }]}>
               Log a Moment
             </Text>
@@ -190,8 +197,8 @@ export default function StrengthsScreen() {
                 {loading ? <ActivityIndicator color="#2F3A45" size="small" /> : <Text style={styles.saveButtonText}>Save</Text>}
               </Pressable>
             </View>
-          </View>
-        </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );
@@ -302,9 +309,7 @@ const styles = StyleSheet.create({
   modalContent: {
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    padding: 30,
-    paddingBottom: 50,
-    gap: 20,
+    maxHeight: '85%',
   },
   modalTitle: {
     fontSize: 20,

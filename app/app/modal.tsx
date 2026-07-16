@@ -1,5 +1,5 @@
-import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, Pressable, TextInput, ActivityIndicator, ScrollView } from 'react-native';
+import React, { useState, useCallback, useRef } from 'react';
+import { View, Text, StyleSheet, FlatList, Pressable, TextInput, ActivityIndicator, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { CONTENT } from '@/src/constants/Content';
 import { LighthousePaper, LighthouseRadii, LighthouseFonts } from '@/src/constants/LighthouseTheme';
@@ -20,6 +20,7 @@ export default function ExploreLighthousesScreen() {
   const { createEntry, findOrCreateStrength, getEntriesForStrength } = useEntries();
 
   const [selected, setSelected] = useState<Lighthouse | null>(null);
+  const detailScrollRef = useRef<ScrollView>(null);
   const [recentEntry, setRecentEntry] = useState<string | null>(null);
   const [evidenceCount, setEvidenceCount] = useState(0);
   const [loadingDetail, setLoadingDetail] = useState(false);
@@ -66,7 +67,16 @@ export default function ExploreLighthousesScreen() {
 
   if (selected) {
     return (
-      <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={styles.detailContent}>
+      <KeyboardAvoidingView
+        style={[styles.container, { backgroundColor: colors.background }]}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+      >
+      <ScrollView
+        ref={detailScrollRef}
+        contentContainerStyle={styles.detailContent}
+        keyboardShouldPersistTaps="handled"
+      >
         <Pressable onPress={() => setSelected(null)} style={styles.backButton}>
           <Text style={{ color: colors.oceanAccent }}>← All Lighthouses</Text>
         </Pressable>
@@ -127,6 +137,12 @@ export default function ExploreLighthousesScreen() {
                     multiline
                     value={reflectionText}
                     onChangeText={setReflectionText}
+                    onFocus={() => {
+                      // Reflection is always the last card here, so scrolling
+                      // to the end reliably brings the input + Save above
+                      // the keyboard without needing to measure positions.
+                      setTimeout(() => detailScrollRef.current?.scrollToEnd({ animated: true }), 150);
+                    }}
                   />
                   <Pressable
                     style={[styles.saveButton, { backgroundColor: colors.sage, opacity: !reflectionText.trim() || saving ? 0.5 : 1 }]}
@@ -141,6 +157,7 @@ export default function ExploreLighthousesScreen() {
           </>
         )}
       </ScrollView>
+      </KeyboardAvoidingView>
     );
   }
 
