@@ -41,7 +41,10 @@
       "typedRoutes": true
     },
     "extra": {
-      "router": {}
+      "router": {},
+      "eas": {
+        "projectId": "d6a71a24-5855-4967-8a3f-d1187695a438"
+      }
     },
     "owner": "agent1"
   }
